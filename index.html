@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No Work No Check</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#e4e7ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141a22" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="No Work No Check">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e4e7ea; --panel:#f7f8f9; --ink:#17202c; --muted:#5b6674; --line:#c9cfd6;
+  --red:#b8291b; --red-ink:#fff; --plate:#e3a81b; --ok:#2f7d4f; --field:#fff;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141a22; --panel:#1d2530; --ink:#e8ecf0; --muted:#98a3b0; --line:#323d4b;
+    --red:#e0503e; --plate:#f0b83a; --ok:#57b27c; --field:#121820;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141a22; --panel:#1d2530; --ink:#e8ecf0; --muted:#98a3b0; --line:#323d4b;
+  --red:#e0503e; --plate:#f0b83a; --ok:#57b27c; --field:#121820;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);min-height:100%;}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--plate);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 120px}
+
+/* Header */
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:20px 0 12px;border-bottom:4px solid var(--red)}
+header.top h1{font:800 2.4rem/0.9 var(--display);margin:0;letter-spacing:.01em}
+header.top .sub{color:var(--muted);font-size:.9rem}
+.brand{display:flex;align-items:center;gap:14px}
+.brand img{display:block;width:84px;height:84px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.18))}
+.brand .sub{font:700 1.15rem/1.1 var(--display);color:var(--ink);letter-spacing:.02em;text-transform:uppercase}
+@media (max-width:420px){.brand img{width:72px;height:72px}.brand .sub{font-size:1rem}}
+nav.tabs{display:flex;gap:2px;margin:14px 0 18px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:1 0 auto;border:0;background:transparent;padding:10px 6px;font:700 1.15rem var(--display);color:var(--muted);border-bottom:3px solid transparent}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* Library */
+.search{width:100%;padding:12px 14px;border:1px solid var(--line);background:var(--field);border-radius:6px;margin-bottom:14px}
+.wo{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--ink);border-radius:4px;padding:14px 14px 12px;margin-bottom:10px}
+.wo h3{font:700 1.5rem/1.05 var(--display);margin:0 0 2px}
+.wo .focus{color:var(--muted);font-size:.9rem}
+.wo ul{list-style:none;margin:10px 0 12px;padding:0;font-size:.95rem}
+.wo li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.wo li:last-child{border-bottom:0}
+.wo li .rx{font-weight:600;white-space:nowrap}
+.wo li.sec{font:700 .95rem var(--display);color:var(--red);border-bottom:0;padding-top:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:0;border-radius:4px;padding:10px 16px;font:700 1.05rem var(--display);background:var(--ink);color:var(--bg)}
+.btn.go{background:var(--red);color:var(--red-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:6px 10px;font-size:.95rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{border:0;background:none;color:var(--muted);text-decoration:underline;padding:6px 4px;font-size:.9rem}
+.empty{border:2px dashed var(--line);border-radius:6px;padding:28px 18px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font:700 1.4rem var(--display);margin-bottom:4px}
+.note{font-size:.88rem;color:var(--muted);margin:6px 0 14px}
+
+/* Session */
+.sess-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.sess-head h2{font:800 2rem/1 var(--display);margin:0}
+.ex{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:12px;overflow:hidden}
+.ex-h{padding:12px 14px 8px}
+.ex-h h3{margin:0;font:700 1.35rem/1.1 var(--display)}
+.ex-h .rx{font-weight:600}
+.ex-h .cue{color:var(--muted);font-size:.9rem;margin-top:2px}
+.ex-h .last{font-size:.85rem;margin-top:4px;color:var(--muted)}
+.ex-h .last b{color:var(--ink)}
+.sec-label{font:700 1rem var(--display);color:var(--red);margin:18px 0 6px}
+table.sets{width:100%;border-collapse:collapse}
+table.sets th{font:600 .8rem var(--body);color:var(--muted);text-align:center;padding:4px}
+table.sets td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}
+table.sets td.n{font:700 1.3rem var(--display);width:40px;color:var(--muted)}
+table.sets input{width:100%;max-width:110px;text-align:center;padding:8px 4px;border:1px solid var(--line);border-radius:4px;background:var(--field);font:700 1.5rem var(--display);font-variant-numeric:tabular-nums}
+table.sets input.rpe{max-width:72px}
+table.sets th.rpe-h abbr{text-decoration:none}
+table.sets tr.done td{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+table.sets tr.done input{border-color:var(--ok)}
+.chk{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--field);font-size:1.2rem;line-height:1}
+tr.done .chk{background:var(--ok);border-color:var(--ok);color:#fff}
+.ex-foot{display:flex;justify-content:space-between;padding:6px 10px 10px}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--bg);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+.dock .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.rest{flex:1;display:flex;align-items:center;gap:10px}
+.rest .t{font:800 2rem/1 var(--display);font-variant-numeric:tabular-nums;min-width:74px}
+.rest .t.hot{color:var(--plate)}
+.rest button{background:transparent;border:1px solid color-mix(in srgb,var(--bg) 40%,transparent);color:var(--bg);border-radius:4px;padding:6px 9px;font:700 .95rem var(--display)}
+.rest .lbl{font-size:.8rem;opacity:.75}
+
+/* Builder */
+label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
+.inp,textarea.inp{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+textarea.inp{min-height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;line-height:1.5}
+.mode{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:16px 0 6px}
+.mode button{flex:1;border:0;background:var(--panel);padding:10px;font:700 1.05rem var(--display);color:var(--muted)}
+.mode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px;margin-bottom:8px}
+.item.section{border-left:5px solid var(--red)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.grid label{font-size:.75rem;color:var(--muted);display:block}
+.grid input{width:100%;padding:8px 6px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+.item .top{display:flex;gap:6px}
+.item .top input{flex:1}
+.icon{border:1px solid var(--line);background:var(--field);border-radius:4px;width:38px;min-width:38px;font-size:1rem}
+.preview{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-top:10px;font-size:.92rem}
+.preview .bad{color:var(--red)}
+
+/* Week */
+.wk-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.wk-head h2{font:800 1.9rem/1 var(--display);margin:0}
+.wk-sub{color:var(--muted);font-size:.92rem;margin:4px 0 0}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:10px 0 16px}
+.bar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.day{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--ink);border-radius:4px;padding:12px;margin-bottom:8px}
+.day.rest{border-left-color:var(--line);background:transparent}
+.day.today{outline:2px solid var(--red);outline-offset:-1px}
+.day.done{border-left-color:var(--ok)}
+.day.done .dw{color:var(--muted)}
+.dinfo{flex:1;min-width:0}
+.dname{font:700 1rem var(--display);color:var(--muted)}
+.dname .tag{background:var(--red);color:#fff;padding:1px 7px;border-radius:3px;font-size:.8rem;margin-left:6px}
+.dname .ok{color:var(--ok);margin-left:6px}
+.dw{font:700 1.35rem/1.1 var(--display)}
+.dfocus{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .chk{flex:none}
+.day.done .chk{background:var(--ok);border-color:var(--ok);color:#fff}
+.rest-dot{width:44px;flex:none;text-align:center;font-size:1.2rem;opacity:.6}
+.day select{width:100%;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--field);margin-top:4px}
+
+.phase{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:4px;padding:12px 14px;margin:0 0 14px}
+.ph-wk{font:800 2.2rem/1 var(--display)}
+.ph-name{font:700 1.2rem var(--display);color:var(--red);margin-top:2px}
+.ph-note{font-size:.9rem;color:var(--muted);margin-top:4px}
+.grid6 td,.grid6 th{text-align:center}
+.grid6 td:first-child,.grid6 th:first-child{text-align:left}
+.grid6 tr.cur td{background:color-mix(in srgb,var(--red) 10%,transparent);font-weight:600}
+.grid6 .y{color:var(--ok);font-weight:800}
+.grid6 .n{color:var(--muted)}
+.wkbtn{border:0;background:none;padding:0;font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;color:inherit}
+.wkdetail td{background:var(--bg);padding:10px 12px!important;text-align:left!important;white-space:normal}
+.wkdetail .wd{margin-bottom:12px}
+.wkdetail .wd h4{margin:0;font:700 1.15rem var(--display)}
+.wkdetail .wd h4 .ok{color:var(--ok);font-size:.9rem;margin-left:6px}
+.wkdetail .wd ul{list-style:none;margin:4px 0 0;padding:0;font-size:.9rem}
+.wkdetail .wd li{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px dashed var(--line)}
+.wkdetail .wd li.sec{font:700 .9rem var(--display);color:var(--red);border-bottom:0;padding-top:6px}
+.wkdetail .wd li .rx{font-weight:600;text-align:right}
+.wkdetail .phn{font:700 1rem var(--display);color:var(--red);margin-bottom:8px}
+/* Program */
+.pcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:16px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--ink);border-radius:4px;padding:10px 12px}
+.pcard.cur{border-top-color:var(--red)}
+.pcard .pw{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.pcard .pn{font:800 1.5rem/1 var(--display);margin:2px 0 4px}
+.pcard .pr2{font-weight:600;font-size:.92rem}
+.pcard .pnote{font-size:.85rem;color:var(--muted);margin-top:4px}
+.pcard .now{background:var(--red);color:#fff;font-size:.72rem;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.s7{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));gap:4px;min-width:600px}
+.s7 div{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px;font-size:.8rem;min-height:58px}
+.s7 div b{display:block;font:700 .95rem var(--display);color:var(--muted)}
+.s7 div.off{background:transparent;color:var(--muted)}
+.pday{margin:22px 0 6px}
+.pday h3{font:800 1.5rem/1.05 var(--display);margin:0}
+.pday .d{font:700 .95rem var(--display);color:var(--red)}
+.pday .f{font-size:.88rem;color:var(--muted)}
+table.ptab td{white-space:normal;font-size:.9rem}
+table.ptab td:first-child{font-weight:600;min-width:150px}
+table.ptab td.same{color:var(--muted);text-align:center}
+table.ptab th.cur,table.ptab td.cur{background:color-mix(in srgb,var(--red) 10%,transparent)}
+table.ptab tr.psec td{font:700 .95rem var(--display);color:var(--red);background:transparent;padding-top:12px}
+.acct{text-align:right;font-size:.8rem;color:var(--muted);align-self:flex-start;padding-top:4px;max-width:40%}
+.acct #who2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct .link{padding:2px 0}
+#auth{position:fixed;inset:0;background:var(--bg);z-index:30;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 16px 24px}
+#auth[hidden]{display:none}
+.auth-card{width:100%;max-width:380px;text-align:center}
+.auth-card img{width:180px;height:180px;margin:8px auto 4px;display:block;filter:drop-shadow(0 3px 5px rgba(0,0,0,.2))}
+.auth-card .tag{font:700 1.2rem/1.2 var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0 0 18px}
+.auth-card label{display:block;text-align:left;font-weight:600;font-size:.9rem;margin:10px 0 0}
+.auth-card input{width:100%;padding:12px;border:1px solid var(--line);border-radius:6px;background:var(--field);margin-top:4px;font-size:16px}
+.auth-card .wide{width:100%;margin-top:14px;padding:13px;font-size:1.2rem}
+.auth-card .or{color:var(--muted);margin:14px 0 0;font-size:.85rem}
+.aerr{color:var(--red);font-weight:600;min-height:1.2em;margin:10px 0 0}
+.setup{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;font-size:.92rem}
+/* Coach */
+.ath{display:flex;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:8px}
+.ath img{width:40px;height:40px;border-radius:50%;flex:none}
+.ai{flex:1;min-width:0}
+.an{font:700 1.25rem/1.1 var(--display)}
+.an .you{font:600 .75rem var(--body);background:var(--ink);color:var(--bg);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.as{font-size:.85rem;color:var(--muted);margin:2px 0 8px}
+.arow{display:grid;grid-template-columns:1fr 150px auto;gap:6px;align-items:center}
+.arow select,.arow input,.pv select{padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--field);width:100%}
+@media (max-width:480px){.arow{grid-template-columns:1fr 1fr}.arow .btn{grid-column:1/-1}}
+.pd{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;margin-bottom:6px}
+.pd b{font:700 1rem var(--display)}
+.pd select{padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+.phg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.phg label{font-size:.75rem;color:var(--muted)}
+.phg input{width:100%;padding:8px 6px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+@media (max-width:480px){.phg{grid-template-columns:repeat(2,1fr)}}
+.chks{display:flex;flex-wrap:wrap;gap:6px}
+.chks label{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:.9rem;cursor:pointer}
+.chks input{width:18px;height:18px;accent-color:var(--red)}
+.pv{margin-bottom:14px}
+/* History */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 12px}
+.stat b{display:block;font:800 1.9rem/1 var(--display)}
+.stat span{font-size:.82rem;color:var(--muted)}
+h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
+.log{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:8px}
+.log > button{display:flex;width:100%;justify-content:space-between;gap:10px;align-items:center;border:0;background:transparent;padding:12px 14px;text-align:left}
+.log .nm{font:700 1.25rem var(--display)}
+.log .meta{color:var(--muted);font-size:.85rem}
+.log .body{padding:0 14px 12px;font-size:.92rem}
+.log .body div{padding:2px 0}
+.pr{overflow-x:auto}
+.pr table{width:100%;border-collapse:collapse;font-size:.95rem;background:var(--panel);border:1px solid var(--line)}
+.pr th,.pr td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pr th{font:600 .8rem var(--body);color:var(--muted)}
+.pr td.num{font:700 1.2rem var(--display);font-variant-numeric:tabular-nums}
+.pr tr.fresh td.num{color:var(--plate)}
+
+.modal{position:fixed;inset:0;background:rgba(10,14,20,.55);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:0 0 env(safe-area-inset-bottom,0px)}
+.sheet{background:var(--panel);width:100%;max-width:720px;border-radius:10px 10px 0 0;padding:18px 16px 22px}
+.sheet h2{font:800 1.8rem var(--display);margin:0 0 4px}
+.rpe{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:8px 0}
+.rpe button{border:1px solid var(--line);background:var(--field);border-radius:4px;padding:10px 0;font:700 1.15rem var(--display)}
+.rpe button[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:4px;z-index:20;font-weight:600;max-width:90vw}
+@media (max-width:420px){ header.top h1{font-size:2rem}}
+@media (prefers-reduced-motion:no-preference){ tr.done td{transition:background .2s} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1><img src="icons/logo.webp" alt="No Work No Check" width="84" height="84"></h1><div class="sub">Build Bigger.<br>Move Faster.<br>Get Stronger.</div></div>
+    <div class="acct"><div id="who2"></div><button class="link" id="signout">Sign out</button></div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="main"></main>
+</div>
+<div id="dock"></div>
+<div id="overlay"></div>
+<div id="toast" class="toast" hidden></div>
+<div id="auth" hidden><div class="auth-card">
+  <img src="icons/logo.webp" alt="No Work No Check">
+  <p class="tag">Build Bigger. Move Faster. Get Stronger.</p>
+  <div id="authForm">
+    <div id="nameRow" hidden><label for="aname">Your name</label><input id="aname" autocomplete="name" placeholder="First and last name"></div>
+    <label for="aemail">Email</label><input id="aemail" type="email" autocomplete="email" inputmode="email">
+    <label for="apass">Password</label><input id="apass" type="password" autocomplete="current-password">
+    <button class="btn go wide" id="abtn">Sign in</button>
+    <p class="aerr" id="aerr" role="alert"></p>
+    <button class="link" id="aswitch">New here? Create an account</button><br>
+    <button class="link" id="areset">Forgot password?</button>
+    <div class="or">or</div>
+    <button class="btn ghost wide" id="gbtn">Continue with Google</button>
+  </div>
+</div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
+
+const S = {
+  openWeek: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
+  db: null, uid: null, canLib: false, filter: '', openLog: null, rest: null
+};
+
+/* ---------- local fallback ---------- */
+const local = {
+  get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const upsert = (arr, o) => { const i = arr.findIndex(x => x.id === o.id); i >= 0 ? arr[i] = o : arr.push(o); };
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2600);
+}
+
+/* ---------- storage ---------- */
+const store = {
+  async saveWorkout(w) {
+    if (S.db) {
+      try { await S.db.collection('library').doc(w.id).set(w); upsert(S.lib, w); return true; }
+      catch (e) { if (e && e.code === 'permission-denied') { S.canLib = false; toast('Only the coach can add or edit workouts here.'); render(); } else toast('Workout not saved. Check your connection and try again.'); return false; }
+    }
+    upsert(S.lib, w); local.set('wt-lib', S.lib); render(); return true;
+  },
+  async deleteWorkout(id) {
+    if (S.db) { try { await S.db.collection('library').doc(id).delete(); } catch (e) { toast('Workout not deleted. Try again.'); } return; }
+    S.lib = S.lib.filter(w => w.id !== id); local.set('wt-lib', S.lib); render();
+  },
+  async saveLog(l) {
+    if (S.db && S.uid) {
+      try { await S.db.collection('users/' + S.uid + '/data').doc(l.id).set(l); return true; }
+      catch (e) { toast('Session saved on this device only.'); }
+    }
+    upsert(S.logs, l); local.set('wt-logs', S.logs); render(); return true;
+  },
+  async saveProgram(pr) {
+    try { await S.db.collection('programs').doc(pr.id).set(pr); return true; } catch (e) { toast('Program not saved. Only the coach can edit programs.'); return false; }
+  },
+  async deleteProgram(id) { try { await S.db.collection('programs').doc(id).delete(); } catch (e) { toast('Program not deleted. Try again.'); } },
+  async saveAssign(uid, a) {
+    try {
+      if (a.programId || a.label) await S.db.collection('assign').doc(uid).set({ uid, programId: a.programId || '', start: a.start || '', label: a.label || '', updated: Date.now() });
+      else await S.db.collection('assign').doc(uid).delete();
+      return true;
+    } catch (e) { toast('Not saved. Only the coach can assign programs.'); return false; }
+  },
+  async saveChecks(key) {
+    const doc = { kind: 'week', id: key, checked: (S.checks[key] || {}).checked || {} };
+    S.checks[key] = doc;
+    if (S.db && S.uid) { try { await S.db.collection('users/' + S.uid + '/data').doc(key).set(doc); return; } catch (e) {} }
+    local.set('wt-checks', S.checks);
+  },
+  async deleteLog(id) {
+    if (S.db && S.uid) { try { await S.db.collection('users/' + S.uid + '/data').doc(id).delete(); } catch (e) {} }
+    const before = S.logs.length;
+    S.logs = S.logs.filter(l => l.id !== id);
+    if (S.logs.length !== before) { local.set('wt-logs', S.logs.filter(l => l._local)); }
+    render();
+  }
+};
+
+/* ---------- smart paste parser ----------
+   Reads a single workout or a whole program pasted from anywhere:
+   "DAY 1 — LOWER BODY" splits workouts; "Back Squat — 4×6", "1. RDL 4x8 @ 135 - cue",
+   "Band pull-apart ×15" under "2 rounds:"; section headers; Goal/notes; weekly schedule;
+   "Weeks 1–2 / Foundation / Main lifts: 3–4×6–8 / RPE: 6.5–7.5" phases.            */
+const EMO = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu;
+const dash = s => s.replace(/[–—]/g, '-');
+const titleCase = s => (s === s.toUpperCase() && /[A-Z]{2}/.test(s)) ? s.toLowerCase().replace(/(^|[\s\-/(+])([a-z])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(Db|Rdl|Bw|Amrap|Emom|Rpe|Pat)\b/g, x => x.toUpperCase()) : s;
+const cleanLine = s => s.replace(/\*\*|__|`/g, '').replace(/^#+\s*/, '').replace(/^[-*•·▪◦►]\s*/, '').replace(/^\d+[.)]\s+/, '')
+  .replace(/\b(\d+(?:\s*[-–—]\s*\d+)?)\s*sets?\s*(?:of|x|×|,)?\s*(?=\d|amrap|max)/gi, '$1x').replace(/(\d)\s*reps?\b/gi, '$1').trim();
+function tableLine(l) {
+  if (!/^\|.*\|$/.test(l)) return l;
+  const c = l.slice(1, -1).split('|').map(x => x.trim());
+  if (c.every(x => /^:?-{2,}:?$/.test(x) || !x)) return '';
+  if (!c.slice(1).some(x => /\d/.test(x))) return /^(exercise|movement|lift|name)$/i.test(c[0]) ? '' : c[0];
+  if (c.length >= 3 && /^\d+(\s*[-–]\s*\d+)?$/.test(c[1])) return `${c[0]} — ${c[1]}x${c[2].replace(/\s+/g, '')}${c.slice(3).filter(Boolean).length ? ' - ' + c.slice(3).filter(Boolean).join('; ') : ''}`;
+  return `${c[0]} — ${c.slice(1).filter(Boolean).join(' - ')}`;
+}
+function splitRx(line) {
+  for (const m of line.matchAll(/\s+[—–-]\s+|:\s+/g)) {
+    const r = line.slice(m.index + m[0].length);
+    if (/^[x×X]?\s*:?\d/.test(r)) return [line.slice(0, m.index).trim(), r.trim()];
+  }
+  const m = line.match(/\s(\d+\s*[x×X]\s*[\d:A-Za-z]|[x×]\s*\d)/);
+  if (m) return [line.slice(0, m.index).trim(), line.slice(m.index + 1).trim()];
+  return [line.trim(), ''];
+}
+function parseRx(rx, rounds) {
+  let r = rx, notes = '', load = '';
+  const nm = r.match(/\s+[—–-]\s+(.+)$/) || r.match(/\s*\(([^)]+)\)\s*$/);
+  if (nm) { notes = nm[1].trim(); r = r.slice(0, nm.index).trim(); }
+  r = r.replace(/\brest\s*\d+\s*(s|sec|secs|m|min)?\b/i, '').trim();
+  const lm = r.match(/\s*@\s*(.+)$/); if (lm) { load = lm[1].trim(); r = r.slice(0, lm.index).trim(); }
+  r = dash(r).replace(/\s*(seconds?|secs?)\b/i, 's').replace(/\s+(?=(yds?|yards?|m|s|min|reps?)\b)/i, '').replace(/\s*-\s*/g, '-').trim();
+  let sets = rounds ? String(rounds) : '1', reps = r;
+  const m = r.match(/^(\d+(?:-\d+)?)\s*[x×X]\s*(.+)$/);
+  if (m) { sets = m[1]; reps = m[2]; } else { const m2 = r.match(/^[x×X]\s*(.+)$/); if (m2) reps = m2[1]; }
+  return { sets, reps: reps.replace(/^reps?\s*/i, ''), load, rest: '', notes };
+}
+const looksEx = s => { const [n, rx] = splitRx(cleanLine(s)); return !!rx && !!n && n.length < 70 && !/^(main|accessor\w*|rpe|weeks?)\b/i.test(n); };
+function smartParse(text) {
+  const lines = String(text || '').split(/\r?\n/).map(l => tableLine(l.replace(EMO, '').replace(/\s+/g, ' ').trim()));
+  const out = { title: '', workouts: [], weeks: 0, phases: [], schedule: Array(7).fill(null) };
+  let cur = null, mode = 'day', rounds = 0, ph = null;
+  const wk = String(text || '').match(/(\d+)\s*-?\s*weeks?\b/i); if (wk) out.weeks = +wk[1];
+  const ensure = () => cur || (cur = { name: '', focus: [], items: [] }, out.workouts.push(cur), cur);
+  const nextLine = i => { for (let j = i + 1; j < lines.length; j++) if (lines[j]) return lines[j]; return ''; };
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i]) continue;
+    const line = cleanLine(lines[i]);
+    if (!line) continue;
+    if (/^(day|workout|session|lift)\s*\d+\b/i.test(line) || /^(workout|day|session)\s+[A-Z]\b(?!\s*[x×]\s*\d)/i.test(line) && !looksEx(line)) {
+      cur = { name: titleCase(line.replace(/[:]\s*$/, '')), focus: [], items: [] }; out.workouts.push(cur); mode = 'day'; rounds = 0; continue;
+    }
+    if (/^week(ly)?\s*schedule\b|^schedule:?$/i.test(line)) { mode = 'sched'; continue; }
+    if (/progression|periodi[sz]ation/i.test(line) && !looksEx(line)) { mode = 'prog'; ph = null; continue; }
+    const sm = line.match(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*[:\-–—]\s*(.+)$/i);
+    if (sm) { const di = ['mon','tue','wed','thu','fri','sat','sun'].indexOf(sm[1].toLowerCase()); out.schedule[di] = /\b(rest|off|recovery day)\b/i.test(sm[2]) ? '' : sm[2].trim(); mode = 'sched'; continue; }
+    if (mode === 'sched') continue;
+    if (mode === 'prog' || /^weeks?\s*\d+\s*[-–—]\s*\d+\s*$/i.test(line)) {
+      mode = 'prog';
+      const w = line.match(/^weeks?\s*(\d+)(?:\s*(?:[-–—&]|to)\s*(\d+))?/i);
+      if (w) { ph = { from: String(+w[1]), to: String(+(w[2] || w[1])), name: '', rpe: '', preset: '', msets: '', mreps: '', note: '' }; out.phases.push(ph); const rest = line.slice(w[0].length).replace(/^[\s:\-–—]+/, ''); if (rest && rest.split(' ').length <= 4) ph.name = titleCase(rest); continue; }
+      if (!ph) continue;
+      const ml = line.match(/^main( lifts?)?\s*:\s*(.+)$/i);
+      if (ml) { const m = dash(ml[2]).replace(/\s*-\s*/g, '-').match(/^([\d-]+)\s*[x×X]\s*(\S+)/); if (m) { if (/^\d+$/.test(m[1])) ph.msets = m[1]; ph.mreps = m[2]; } continue; }
+      const rp = line.match(/^rpe\s*:?\s*([\d.]+)(?:\s*[-–—]\s*([\d.]+))?/i);
+      if (rp) { const a = +rp[1], b = +(rp[2] || rp[1]); ph.rpe = rp[2] ? `${rp[1]}–${rp[2]}` : rp[1]; ph.preset = String(Math.round(a + b) / 2); continue; }
+      if (/^accessor/i.test(line)) continue;
+      if (!ph.name && line.split(' ').length <= 4 && !/[.!?]$/.test(line)) { ph.name = titleCase(line); continue; }
+      ph.note = (ph.note ? ph.note + ' ' : '') + line; continue;
+    }
+    const rm = line.match(/^(\d+)\s*(rounds?|circuits?)\b/i);
+    if (rm && !looksEx(line)) {
+      rounds = +rm[1]; const w = ensure(), last = w.items[w.items.length - 1];
+      if (last && last.type === 'section' && !/round/i.test(last.label)) last.label += ` — ${rounds} rounds`;
+      else w.items.push({ type: 'section', label: `${rounds} rounds` });
+      continue;
+    }
+    if (looksEx(line)) {
+      const [n, rx] = splitRx(line);
+      ensure().items.push({ type: 'ex', name: n.replace(/\s*[:\-–—]\s*$/, '').trim(), ...parseRx(rx, rounds) });
+      continue;
+    }
+    const prose = /^(goal|note|notes|important|tip|focus|coach(ing)?( note)?|why)\s*:/i.test(line) || /[.!?]$/.test(line) || line.split(' ').length > 7;
+    const nx = nextLine(i);
+    const header = !prose && (/:$/.test(line) || /^#/.test(line) || looksEx(nx) || /^\d+\s*(rounds?|circuits?)\b/i.test(cleanLine(nx)));
+    if (!cur && !out.title && !header && !prose) { out.title = titleCase(line.replace(/:$/, '')); continue; }
+    if (header) { rounds = 0; ensure().items.push({ type: 'section', label: titleCase(line.replace(/^#+\s*/, '').replace(/:$/, '').trim()) }); continue; }
+    if (cur || out.workouts.length) ensure().focus.push(line.replace(/:$/, ''));
+  }
+  out.workouts = out.workouts.filter(w => w.items.some(x => x.type === 'ex')).map(w => {
+    while (w.items.length && w.items[w.items.length - 1].type === 'section') w.items.pop();
+    return { name: w.name, focus: w.focus.join(' · '), items: w.items };
+  });
+  return out;
+}
+const parseText = t => { const r = smartParse(t); return r.workouts.length === 1 ? r.workouts[0].items : r.workouts.flatMap(w => [{ type: 'section', label: w.name || 'Workout' }, ...w.items]); };
+function matchSchedule(sched, wos) {
+  const toks = s => new Set(String(s || '').toLowerCase().split(/[^a-z]+/).filter(t => t.length > 2 && !['day', 'the', 'and', 'with', 'for'].includes(t)));
+  const days = sched.map(v => {
+    if (!v) return null;
+    const q = toks(v); let best = -1, bs = 0;
+    wos.forEach((w, k) => {
+      const a = toks(w.name), b = toks(w.items.filter(x => x.type === 'section').map(x => x.label).join(' ') + ' ' + w.focus.slice(0, 80));
+      let sc = 0; q.forEach(t => { if (a.has(t)) sc += 2; else if (b.has(t)) sc += 1; });
+      if (sc > bs) { bs = sc; best = k; }
+    });
+    return best >= 0 ? best : null;
+  });
+  if (days.some(d => d !== null)) return days;
+  const byFocus = Array(7).fill(null);
+  wos.forEach((w, k) => { const m = (w.name + ' ' + w.focus).match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i); if (m) byFocus[DAYS.findIndex(d => d.toLowerCase() === m[1].toLowerCase())] = k; });
+  return byFocus;
+}
+const toText = items => items.map(it => it.type === 'section' ? it.label + ':' :
+  `${it.name}${it.sets || it.reps ? ` ${it.sets || 1}x${it.reps || ''}` : ''}${it.load ? ` @ ${it.load}` : ''}${it.notes ? ` - ${it.notes}` : ''}`).join('\n');
+const rxText = it => `${it.sets || 1} × ${it.reps || '—'}${it.load ? ' @ ' + it.load : ''}`;
+
+/* ---------- derived ---------- */
+function lastFor(name) {
+  const key = name.toLowerCase();
+  const logs = [...S.logs].sort((a, b) => b.date - a.date);
+  for (const l of logs) {
+    const ex = (l.exercises || []).find(e => e.name.toLowerCase() === key);
+    if (ex) { const done = ex.sets.filter(s => s.done); if (done.length) return { date: l.date, sets: done }; }
+  }
+  return null;
+}
+function bests() {
+  const map = {};
+  for (const l of S.logs) for (const ex of (l.exercises || [])) for (const s of ex.sets) {
+    if (!s.done) continue;
+    const w = num(s.weight), r = num(s.reps), k = ex.name.toLowerCase();
+    const m = map[k] || (map[k] = { name: ex.name, top: 0, topReps: 0, est: 0, date: 0, estDate: 0 });
+    if (w > m.top || (w === m.top && r > m.topReps)) { m.top = w; m.topReps = r; m.date = l.date; }
+    const e = e1rm(w, r); if (e > m.est) { m.est = e; m.estDate = l.date; }
+  }
+  return Object.values(map).filter(m => m.top > 0).sort((a, b) => a.name.localeCompare(b.name));
+}
+const volume = l => (l.exercises || []).reduce((t, ex) => t + ex.sets.filter(s => s.done).reduce((a, s) => a + num(s.weight) * num(s.reps), 0), 0);
+const setsDone = l => (l.exercises || []).reduce((t, ex) => t + ex.sets.filter(s => s.done).length, 0);
+
+/* ---------- render ---------- */
+function renderTabs() {
+  const tabs = [['week', 'Week'], ['program', 'Program'], ['library', 'Workouts'], ['build', S.edit && S.edit.id && S.lib.some(w => w.id === S.edit.id) ? 'Edit' : 'Add'], ['history', 'History']];
+  if (!S.canLib) tabs.splice(3, 1);
+  if (S.canLib) tabs.push(['coach', 'Coach']);
+  if (S.session) tabs.unshift(['session', 'Live']);
+  $('#tabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${l}</button>`).join('');
+}
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+function weekStart(t = Date.now()) { const d = new Date(t); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; }
+const pad = n => String(n).padStart(2, '0');
+const wkKeyOf = d => `wk-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const wkKey = () => wkKeyOf(weekStart());
+function dayDone(i, ws = weekStart()) {
+  const wid = S.sched.days[i]; if (!wid) return false;
+  const c = (S.checks[wkKeyOf(ws)] || {}).checked || {};
+  if (c[i] !== undefined) return !!c[i];
+  const a = ws.getTime(), b = a + 7 * 864e5;
+  return S.logs.some(l => l.workoutId === wid && l.date >= a && l.date < b);
+}
+function progInfo(ws = weekStart()) {
+  const p = S.sched.program; if (!p || !p.start) return null;
+  const [y, m, d] = p.start.split('-').map(Number);
+  const st = weekStart(new Date(y, m - 1, d).getTime());
+  const wk = Math.round((ws - st) / (7 * 864e5)) + 1;
+  const phase = (p.phases || []).find(ph => wk >= ph.from && wk <= ph.to) || null;
+  return { p, st, wk, weeks: p.weeks || 6, phase };
+}
+function weekDetail(wn, ws, pi) {
+  const ph = (pi.p.phases || []).find(x => wn >= x.from && wn <= x.to) || null;
+  let out = ph ? `<div class="phn">${esc(ph.name)} · RPE ${esc(ph.rpe || ph.preset || '—')}${ph.note ? ` — <span style="font:400 .88rem var(--body);color:var(--muted)">${esc(ph.note)}</span>` : ''}</div>` : '';
+  S.sched.days.forEach((id, i) => {
+    const w = id && S.lib.find(x => x.id === id); if (!w) return;
+    const dt = new Date(ws); dt.setDate(ws.getDate() + i);
+    let sec = '';
+    out += `<div class="wd"><h4>${DAYS[i].slice(0, 3)} ${dt.getMonth() + 1}/${dt.getDate()} — ${esc(w.name)}${dayDone(i, ws) ? '<span class="ok">✓ Done</span>' : ''}</h4><ul>${w.items.map(it => {
+      if (it.type === 'section') { sec = it.label; return `<li class="sec">${esc(it.label)}</li>`; }
+      return `<li><span>${esc(it.name)}</span><span class="rx">${esc(phaseRx(w.id, it, sec, ph, pi.p))}</span></li>`;
+    }).join('')}</ul></div>`;
+  });
+  return out;
+}
+function programHtml() {
+  const pi = progInfo(); if (!pi) return '';
+  const fmtD = d => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  let top;
+  if (pi.wk < 1) top = `<div class="phase"><div class="ph-wk">Starts ${fmtD(pi.st)}</div><div class="ph-note">${pi.weeks}-week program</div></div>`;
+  else if (pi.wk > pi.weeks) top = `<div class="phase"><div class="ph-wk">Program complete</div><div class="ph-note">All ${pi.weeks} weeks are done. Set a new start date under Edit week to run it again.</div></div>`;
+  else {
+    const ph = pi.phase || {}, mn = ph.main || {};
+    top = `<div class="phase"><div class="ph-wk">Week ${pi.wk} of ${pi.weeks}</div>
+      <div class="ph-name">${esc(ph.name || '')}${ph.rpe ? ' · RPE ' + esc(ph.rpe) : ''}</div>
+      <div class="ph-note">${mn.reps ? `Main lifts ${mn.sets ? esc(mn.sets) + '×' : ''}${esc(mn.reps)}. ` : ''}${esc(ph.note || '')}</div></div>`;
+  }
+  const idx = S.sched.days.map((w, i) => w ? i : -1).filter(i => i >= 0);
+  let rows = '', done = 0;
+  for (let w = 1; w <= pi.weeks; w++) {
+    const ws = new Date(pi.st); ws.setDate(ws.getDate() + 7 * (w - 1));
+    const open = S.openWeek === w;
+    rows += `<tr class="${w === pi.wk ? 'cur' : ''}"><td><button class="wkbtn" data-act="openweek" data-w="${w}" aria-expanded="${open}">Week ${w} ${open ? '▾' : '▸'}</button></td>${idx.map(i => { const y = dayDone(i, ws); done += y ? 1 : 0; return `<td>${y ? '<span class="y" aria-label="done">✓</span>' : '<span class="n" aria-label="not done">·</span>'}</td>`; }).join('')}</tr>`;
+    if (open) rows += `<tr class="wkdetail"><td colspan="${idx.length + 1}">${weekDetail(w, ws, pi)}</td></tr>`;
+  }
+  const grid = `<h2 class="h">${pi.weeks}-week progress <span style="font:600 1rem var(--body);color:var(--muted)">${done} of ${pi.weeks * idx.length}</span></h2>
+    <div class="pr"><table class="grid6"><thead><tr><th>Week</th>${idx.map(i => `<th>${DAYS[i].slice(0, 3)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return { top, grid };
+}
+function viewWeek() {
+  const ws = weekStart(), today = (new Date().getDay() + 6) % 7;
+  const days = S.sched.days.map(id => id ? (S.lib.find(w => w.id === id) || { missing: true }) : null);
+  const planned = days.filter(Boolean).length;
+  const done = days.reduce((t, w, i) => t + (w && dayDone(i) ? 1 : 0), 0);
+  if (!planned) return S.db ? `<div class="empty"><strong>No program assigned yet</strong>${S.canLib ? 'Assign yourself (or anyone) a program in the Coach tab.' : 'Your coach will assign you a program. Check back soon.'}<div style="margin-top:14px">${S.canLib ? '<button class="btn go" data-tab="coach">Open Coach</button>' : ''}</div></div>`
+    : `<div class="empty"><strong>No program yet</strong>Sign in to see your assigned program.</div>`;
+  const prog = programHtml();
+  let html = (prog ? prog.top : '') + `<div class="wk-head"><h2>This week</h2>${S.myProg ? `<span class="wk-sub">${esc(S.myProg.name)}</span>` : ''}</div>
+    <p class="wk-sub">Week of ${ws.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} · <b>${done} of ${planned}</b> workouts done${done === planned && planned ? ' — week complete 💪' : ''}</p>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${planned}" aria-valuenow="${done}"><i style="width:${planned ? done / planned * 100 : 0}%"></i></div>`;
+  html += days.map((w, i) => {
+    const date = new Date(ws); date.setDate(ws.getDate() + i);
+    const isDone = w && dayDone(i);
+    const label = `<div class="dname">${DAYS[i]} ${date.getMonth() + 1}/${date.getDate()}${i === today ? '<span class="tag">Today</span>' : ''}${isDone ? '<span class="ok">Done</span>' : ''}</div>`;
+    if (!w) return `<div class="day rest"><span class="rest-dot" aria-hidden="true">💤</span><div class="dinfo">${label}<div class="dw">Rest</div></div></div>`;
+    if (w.missing) return `<div class="day rest"><span class="rest-dot" aria-hidden="true">—</span><div class="dinfo">${label}<div class="dw">Workout was removed</div></div></div>`;
+    return `<div class="day ${isDone ? 'done' : ''} ${i === today ? 'today' : ''}">
+      <button class="chk" data-act="daytick" data-i="${i}" aria-pressed="${!!isDone}" aria-label="Mark ${DAYS[i]} ${isDone ? 'not done' : 'done'}">✓</button>
+      <div class="dinfo">${label}<div class="dw">${esc(w.name)}</div>${w.focus ? `<div class="dfocus">${esc(w.focus)}</div>` : ''}</div>
+      ${isDone ? '' : `<button class="btn go small" data-act="start" data-id="${w.id}">Start</button>`}</div>`;
+  }).join('');
+  if (prog) html += prog.grid;
+  html += `<p class="note">Tap ✓ to check off a day. Finishing a workout in the app checks it off for you. The week resets every Monday.</p>`;
+  return html;
+}
+
+function phaseRx(wid, it, sec, ph, p) {
+  const r = { ...it };
+  if (ph && ph.main && (p.main || []).some(m => m.toLowerCase() === it.name.toLowerCase())) { if (ph.main.sets) r.sets = ph.main.sets; if (ph.main.reps) r.reps = ph.main.reps; }
+  const rpe = ph && (p.presetWorkouts || []).includes(wid) && !(p.skipSections || []).includes(sec) ? (ph.rpe || ph.preset) : '';
+  return `${r.sets || 1} × ${r.reps || '—'}${r.load ? ' @ ' + r.load : ''}${rpe ? ' · RPE ' + rpe : ''}`;
+}
+function viewProgram() {
+  let pick = '';
+  if (S.canLib && S.programs.length) pick = `<div class="pv"><label class="f" for="pvsel">Viewing</label><select id="pvsel" data-pv>${S.myProg ? `<option value="">My program (${esc(S.myProg.name)})</option>` : '<option value="">My program</option>'}${S.programs.map(p => `<option value="${p.id}" ${S.previewProg === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>`;
+  let saved = null;
+  if (S.canLib && S.previewProg) {
+    const pr = S.programs.find(p => p.id === S.previewProg);
+    if (pr) { saved = S.sched; const mine = S.myProg && S.myProg.id === pr.id; S.sched = schedFor(pr, mine ? S.sched.program.start : ''); }
+  }
+  try { return pick + viewProgramInner(); } finally { if (saved) S.sched = saved; }
+}
+function viewProgramInner() {
+  const pi = progInfo(), p = S.sched.program || null, phases = (p && p.phases) || [];
+  const days = S.sched.days.map((id, i) => ({ i, w: id && S.lib.find(x => x.id === id) })).filter(d => d.w);
+  if (!days.length) return `<div class="empty"><strong>No program set up yet</strong>${S.canLib ? 'Build one in Coach → Programs, then assign it.' : 'Your coach will assign you a program.'}</div>`;
+  const cur = pi ? phases.findIndex(ph => pi.wk >= ph.from && pi.wk <= ph.to) : -1;
+  const fmtD = d => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  let html = `<div class="phase"><div class="ph-wk">${esc(p && p.name ? p.name : 'Program')}</div>
+    <div class="ph-note">${p && p.weeks ? p.weeks + ' weeks · ' : ''}${days.length} training days a week${pi ? ` · Starts ${fmtD(pi.st)}${pi.wk >= 1 && pi.wk <= pi.weeks ? ` · You're in Week ${pi.wk}` : ''}` : ''}</div></div>`;
+  if (phases.length) html += `<div class="pcards">${phases.map((ph, k) => `<div class="pcard ${k === cur ? 'cur' : ''}">
+      <div class="pw">Weeks ${ph.from}–${ph.to}${k === cur ? '<span class="now">Now</span>' : ''}</div><div class="pn">${esc(ph.name)}</div>
+      <div class="pr2">Main lifts ${ph.main && ph.main.sets ? esc(ph.main.sets) + '×' : ''}${esc(ph.main ? ph.main.reps : '')} · RPE ${esc(ph.rpe || ph.preset || '—')}</div>
+      <div class="pnote">${esc(ph.note || '')}</div></div>`).join('')}</div>`;
+  html += `<h2 class="h">Weekly schedule</h2><div class="pr"><div class="s7">${S.sched.days.map((id, i) => { const w = id && S.lib.find(x => x.id === id); return `<div class="${w ? '' : 'off'}"><b>${DAYS[i].slice(0, 3)}</b>${w ? esc(w.name) : '💤 Rest'}</div>`; }).join('')}</div></div>`;
+  for (const { i, w } of days) {
+    const cols = phases.length ? phases : [null];
+    html += `<div class="pday"><div class="d">${DAYS[i]}</div><h3>${esc(w.name)}</h3>${w.focus ? `<div class="f">${esc(w.focus)}</div>` : ''}</div>
+    <div class="pr"><table class="ptab"><thead><tr><th>Exercise</th>${phases.length ? phases.map((ph, k) => `<th class="${k === cur ? 'cur' : ''}">Wk ${ph.from}–${ph.to}</th>`).join('') : '<th>Prescription</th>'}</tr></thead><tbody>`;
+    let sec = '';
+    for (const it of w.items) {
+      if (it.type === 'section') { sec = it.label; html += `<tr class="psec"><td colspan="${cols.length + 1}">${esc(it.label)}</td></tr>`; continue; }
+      const rx = cols.map(ph => phaseRx(w.id, it, sec, ph, p || {}));
+      const same = rx.every(x => x === rx[0]);
+      html += `<tr><td>${esc(it.name)}${it.notes ? `<div style="font-weight:400;color:var(--muted);font-size:.82rem">${esc(it.notes)}</div>` : ''}</td>${same && cols.length > 1 ? `<td colspan="${cols.length}" class="same">${esc(rx[0])} · every week</td>` : rx.map((x, k) => `<td class="${k === cur ? 'cur' : ''}">${esc(x)}</td>`).join('')}</tr>`;
+    }
+    html += `</tbody></table></div><div class="row" style="margin-top:8px"><button class="btn go small" data-act="start" data-id="${w.id}">Start</button></div>`;
+  }
+  return html;
+}
+
+const PAD7 = d => (d || []).concat(Array(7).fill(null)).slice(0, 7);
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function schedFor(pr, start) { return { days: PAD7(pr.days), program: { ...pr, start: start || '' } }; }
+function applyMine() {
+  if (!S.db) return;
+  const a = S.uid && S.assign[S.uid];
+  const pr = a && a.programId && S.programs.find(p => p.id === a.programId);
+  S.myProg = pr || null;
+  S.sched = pr ? schedFor(pr, a.start) : { days: PAD7([]) };
+}
+function wkOf(start) {
+  if (!start) return null;
+  const [y, m, d] = start.split('-').map(Number);
+  return Math.round((weekStart() - weekStart(new Date(y, m - 1, d).getTime())) / (7 * 864e5)) + 1;
+}
+function viewCoach() {
+  if (!S.canLib) return '';
+  if (!S.db) return `<div class="empty"><strong>Coach tools need the published app</strong>Sign in to manage programs and athletes.</div>`;
+  return `<div class="mode" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button></div>` +
+    (S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : viewAthletes());
+}
+function viewAthletes() {
+  const ppl = [...S.roster].sort((a, b) => (b.id === S.uid) - (a.id === S.uid) || (b.lastSeen || 0) - (a.lastSeen || 0));
+  if (!ppl.length) return `<div class="empty"><strong>No one here yet</strong>Share the app link. Each person shows up here the first time they open it.</div>`;
+  const progOpts = sel => `<option value="">No program</option>` + S.programs.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  return `<p class="note">Everyone who opens the app shows up here. Pick a program and the Monday it starts, then Save.</p>` + ppl.map(r => {
+    const pf = S.ppl[r.id] || {}, a = S.assign[r.id] || {};
+    const dr = S.adraft[r.id] || (S.adraft[r.id] = { programId: a.programId || '', start: a.start || isoDate(weekStart()), label: a.label || '' });
+    const pr = S.programs.find(p => p.id === a.programId);
+    const wk = pr ? wkOf(a.start) : null;
+    const status = !a.programId ? 'No program assigned' : !pr ? 'Assigned program was deleted' :
+      `${esc(pr.name)} · ${wk < 1 ? 'starts ' + esc(a.start) : wk > (pr.weeks || 6) ? 'finished' : 'Week ' + wk + ' of ' + (pr.weeks || 6)}`;
+    const name = pf.name || a.label;
+    return `<div class="ath">${pf.avatarUrl ? `<img src="${esc(pf.avatarUrl)}" alt="">` : ''}<div class="ai">
+      <div class="an">${esc(name || 'Unnamed athlete')}${r.id === S.uid ? '<span class="you">You</span>' : ''}</div>
+      <div class="as">${status}</div>
+      ${pf.name ? '' : `<input class="inp" style="margin-bottom:6px" data-al="${r.id}" value="${esc(dr.label)}" placeholder="Add a name so you know who this is" aria-label="Athlete name">`}
+      <div class="arow"><select data-ap="${r.id}" aria-label="Program">${progOpts(dr.programId)}</select>
+      <input type="date" data-as="${r.id}" value="${esc(dr.start)}" aria-label="Start date">
+      <button class="btn go small" data-act="saveassign" data-u="${r.id}">Save</button></div></div></div>`;
+  }).join('');
+}
+function viewProgList() {
+  const list = [...S.programs].sort((a, b) => a.name.localeCompare(b.name));
+  return `<div class="row" style="margin-bottom:12px"><button class="btn go" data-act="newprog">New program</button></div>` + (list.length ? list.map(p => {
+    const n = Object.values(S.assign).filter(a => a.programId === p.id).length;
+    const days = PAD7(p.days).map((id, i) => id ? DAYS[i].slice(0, 3) : null).filter(Boolean).join(' · ');
+    return `<article class="wo"><h3>${esc(p.name)}</h3><div class="focus">${p.weeks || '?'} weeks · ${days || 'no days set'} · ${n} athlete${n === 1 ? '' : 's'}${(p.phases || []).length ? ' · ' + p.phases.length + ' phases' : ''}</div>
+      <div class="row" style="margin-top:10px"><button class="btn ghost small" data-act="editprog" data-id="${p.id}">Edit</button><button class="btn ghost small" data-act="dupprog" data-id="${p.id}">Duplicate</button><button class="btn ghost small" data-act="viewprog" data-id="${p.id}">View</button></div></article>`;
+  }).join('') : `<div class="empty"><strong>No programs yet</strong>Paste a program in the Add tab, or load your Catcher Off-Season program to start.<div style="margin-top:14px"><button class="btn go" data-act="seed">Load Catcher Off-Season</button></div></div>`);
+}
+const flatPhase = ph => ({ from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', note: ph.note || '' });
+function progEditFrom(pr, copy) {
+  return { id: copy ? null : pr.id, name: copy ? pr.name + ' (copy)' : pr.name, weeks: pr.weeks || 6, days: PAD7(pr.days),
+    phases: (pr.phases || []).map(flatPhase), main: [...(pr.main || [])], presetWorkouts: [...(pr.presetWorkouts || [])], skipSections: [...(pr.skipSections || [])] };
+}
+function viewProgEdit() {
+  const e = S.pedit;
+  const wos = [...new Set(e.days.filter(Boolean))].map(id => S.lib.find(w => w.id === id)).filter(Boolean);
+  const names = [...new Set(wos.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)))];
+  const secs = [...new Set(wos.flatMap(w => w.items.filter(i => i.type === 'section').map(i => i.label)))];
+  const chk = (attr, val, on) => `<label><input type="checkbox" ${attr}="${esc(val)}" ${on ? 'checked' : ''}>`;
+  let html = `<label class="f" for="pname">Program name</label><input class="inp" id="pname" data-pe="name" value="${esc(e.name)}" placeholder="e.g. Firefighter PAT Prep">
+  <label class="f" for="pweeks">Length (weeks)</label><input class="inp" id="pweeks" style="max-width:120px" type="number" min="1" max="52" data-pe="weeks" value="${esc(e.weeks)}">
+  <h2 class="h">Weekly schedule</h2><p class="note">Workouts come from the Workouts library. Add new ones in the Add tab first.</p>
+  ${e.days.map((id, i) => `<div class="pd"><b>${DAYS[i]}</b><select data-pd="${i}" aria-label="${DAYS[i]} workout"><option value="">💤 Rest</option>${S.lib.map(w => `<option value="${w.id}" ${id === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}</select></div>`).join('')}
+  <h2 class="h">Phases</h2><p class="note">Each phase sets the main-lift sets × reps and the RPE for a range of weeks. No phases = workouts run exactly as written every week.</p>
+  ${e.phases.map((ph, k) => `<div class="item section"><div class="phg">
+    ${[['from', 'From week'], ['to', 'To week'], ['name', 'Phase name'], ['rpe', 'RPE target'], ['preset', 'RPE preset'], ['msets', 'Main sets'], ['mreps', 'Main reps']].map(([f, l]) => `<div><label>${l}<input data-ph="${k}" data-pf="${f}" value="${esc(ph[f])}"></label></div>`).join('')}
+    <div style="display:flex;align-items:flex-end"><button class="btn ghost small" data-act="rmphase" data-k="${k}">Remove</button></div></div>
+    <input class="inp" style="margin-top:6px" data-ph="${k}" data-pf="note" value="${esc(ph.note)}" placeholder="Coaching note for this phase" aria-label="Phase note"></div>`).join('')}
+  <button class="btn ghost small" data-act="addphase">Add phase</button>`;
+  if (names.length) html += `<h2 class="h">Main lifts</h2><p class="note">These take each phase's main sets × reps. Everything else runs as written.</p>
+    <div class="chks">${names.map(n => chk('data-cm', n, e.main.includes(n)) + esc(n) + '</label>').join('')}</div>`;
+  if (wos.length) html += `<h2 class="h">RPE preset applies to</h2><div class="chks">${wos.map(w => chk('data-cw', w.id, e.presetWorkouts.includes(w.id)) + esc(w.name) + '</label>').join('')}</div>`;
+  if (secs.length) html += `<p class="note" style="margin-top:12px">Skip the RPE preset in these sections:</p><div class="chks">${secs.map(s => chk('data-cs', s, e.skipSections.includes(s)) + esc(s) + '</label>').join('')}</div>`;
+  html += `<div class="row" style="margin-top:22px;justify-content:space-between"><span>${e.id ? '<button class="link" data-act="delprog">Delete program</button>' : ''}<button class="link" data-act="cancelprog">Cancel</button></span><button class="btn go" data-act="saveprog">Save program</button></div>`;
+  return html;
+}
+
+function viewLibrary() {
+  const q = S.filter.toLowerCase();
+  const list = S.lib.filter(w => !q || (w.name + ' ' + (w.focus || '')).toLowerCase().includes(q))
+    .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  if (!S.lib.length) return `<div class="empty"><strong>No workouts yet</strong>${S.canLib ? 'Add your first one — paste it straight from your notes.' : 'Your coach hasn\'t posted any workouts yet.'}<div style="margin-top:14px">${S.canLib ? '<button class="btn go" data-act="new">Add a workout</button>' : ''}</div></div>`;
+  return `<input class="search" type="search" placeholder="Search workouts" value="${esc(S.filter)}" id="search" aria-label="Search workouts">` +
+    (list.length ? list.map(w => `
+    <article class="wo">
+      <h3>${esc(w.name)}</h3>${w.focus ? `<div class="focus">${esc(w.focus)}</div>` : ''}
+      <ul>${w.items.map(it => it.type === 'section' ? `<li class="sec">${esc(it.label)}</li>` : `<li><span>${esc(it.name)}</span><span class="rx">${esc(rxText(it))}</span></li>`).join('')}</ul>
+      <div class="row"><button class="btn go" data-act="start" data-id="${w.id}">Start</button>
+      ${S.canLib ? `<button class="btn ghost small" data-act="edit" data-id="${w.id}">Edit</button><button class="btn ghost small" data-act="dup" data-id="${w.id}">Duplicate</button>` : ''}</div>
+    </article>`).join('') : `<p class="note">No workouts match “${esc(S.filter)}”.</p>`);
+}
+
+function viewSession() {
+  const s = S.session; if (!s) return '';
+  let html = `<div class="sess-head"><h2>${esc(s.name)}</h2></div>`;
+  s.exercises.forEach((ex, ei) => {
+    if (ex.section) html += `<div class="sec-label">${esc(ex.section)}</div>`;
+    const last = lastFor(ex.name);
+    html += `<section class="ex"><div class="ex-h"><h3>${esc(ex.name)}</h3>
+      <div class="rx">${esc(rxText(ex.rx))}${ex.rx.rpeT ? ' · RPE ' + esc(ex.rx.rpeT) : ''}</div>
+      ${ex.rx.notes ? `<div class="cue">${esc(ex.rx.notes)}</div>` : ''}
+      ${last ? `<div class="last">Last time (${fmtDate(last.date)}): <b>${last.sets.map(x => `${x.weight || 'BW'}×${x.reps}${x.rpe ? ' @' + x.rpe : ''}`).join(', ')}</b></div>` : ''}
+      </div>
+      <table class="sets"><thead><tr><th>Set</th><th>Weight</th><th>Reps</th><th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
+      ${ex.sets.map((st, si) => `<tr class="${st.done ? 'done' : ''}">
+        <td class="n">${si + 1}</td>
+        <td><input inputmode="decimal" aria-label="Set ${si + 1} weight" data-ei="${ei}" data-si="${si}" data-k="weight" value="${esc(st.weight)}" placeholder="${esc(st.phW || '')}"></td>
+        <td><input inputmode="numeric" aria-label="Set ${si + 1} reps" data-ei="${ei}" data-si="${si}" data-k="reps" value="${esc(st.reps)}" placeholder="${esc(st.phR || '')}"></td>
+        <td><input class="rpe" inputmode="decimal" aria-label="Set ${si + 1} RPE" data-ei="${ei}" data-si="${si}" data-k="rpe" value="${esc(st.rpe || '')}" placeholder="${esc(st.phRPE || '–')}"></td>
+        <td><button class="chk" data-act="tick" data-ei="${ei}" data-si="${si}" aria-label="Mark set ${si + 1} done" aria-pressed="${!!st.done}">✓</button></td></tr>`).join('')}
+      </tbody></table>
+      <div class="ex-foot"><button class="link" data-act="addset" data-ei="${ei}">Add set</button>${ex.sets.length > 1 ? `<button class="link" data-act="rmset" data-ei="${ei}">Remove last set</button>` : ''}</div>
+    </section>`;
+  });
+  html += `<div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" data-act="discard">Discard session</button><button class="btn go" data-act="finish">Finish workout</button></div>`;
+  return html;
+}
+
+function viewBuild() {
+  if (!S.canLib) return `<div class="empty"><strong>Coach-only</strong>Workouts are posted by the coach. You can still run and log any workout from the Workouts tab.</div>`;
+  const e = S.edit || (S.edit = { id: null, name: '', focus: '', items: [] });
+  const isEdit = e.id && S.lib.some(w => w.id === e.id);
+  const res = S.mode === 'paste' ? smartParse(S.pasteText) : null, multi = res && res.workouts.length > 1;
+  let html = `<div id="single" style="${multi ? 'display:none' : ''}"><label class="f" for="bname">Workout name</label><input class="inp" id="bname" data-b="name" value="${esc(e.name)}" placeholder="e.g. Shift day lower + core">
+  <label class="f" for="bfocus">Focus or notes <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input class="inp" id="bfocus" data-b="focus" value="${esc(e.focus)}" placeholder="e.g. Strength · 45 min · PAT prep"></div>
+  <div class="mode" role="group" aria-label="Entry mode"><button data-act="mode" data-m="paste" aria-pressed="${S.mode === 'paste'}">Paste text</button><button data-act="mode" data-m="form" aria-pressed="${S.mode === 'form'}">Build line by line</button></div>`;
+  if (S.mode === 'paste') {
+    html += `<p class="note">Paste a workout — or a whole program — from anywhere: a doc, a text, ChatGPT. Headers like <b>DAY 1</b> split it into separate workouts, and a weekly schedule or week-by-week progression sets up a program too.</p>
+    <textarea class="inp" id="paste" aria-label="Workout text" placeholder="DAY 1 — LOWER BODY
+1. Back Squat — 4×6
+2. Romanian Deadlift — 4×8 @ 135 - slow down
+Core
+Dead Bug — 3×8/side
+
+DAY 2 — UPPER BODY
+Bench Press 4x6
+Pull-Ups 4x6-10">${esc(S.pasteText)}</textarea>
+    <div class="preview" id="preview">${previewAny(res)}</div>`;
+  } else {
+    html += e.items.map((it, i) => it.type === 'section' ? `
+      <div class="item section"><div class="top"><input class="inp" data-i="${i}" data-f="label" value="${esc(it.label)}" placeholder="Section name" aria-label="Section name">
+      <button class="icon" data-act="up" data-i="${i}" aria-label="Move up">↑</button><button class="icon" data-act="rm" data-i="${i}" aria-label="Remove">✕</button></div></div>` : `
+      <div class="item"><div class="top"><input class="inp" data-i="${i}" data-f="name" value="${esc(it.name)}" placeholder="Exercise" aria-label="Exercise name">
+      <button class="icon" data-act="up" data-i="${i}" aria-label="Move up">↑</button><button class="icon" data-act="rm" data-i="${i}" aria-label="Remove">✕</button></div>
+      <div class="grid">${[['sets', 'Sets'], ['reps', 'Reps'], ['load', 'Load']].map(([f, l]) => `<div><label>${l}<input data-i="${i}" data-f="${f}" value="${esc(it[f])}"></label></div>`).join('')}</div>
+      <input class="inp" style="margin-top:6px" data-i="${i}" data-f="notes" value="${esc(it.notes)}" placeholder="Coaching cue (optional)" aria-label="Coaching cue"></div>`).join('') +
+      `<div class="row" style="margin:6px 0 4px"><button class="btn ghost small" data-act="addex">Add exercise</button><button class="btn ghost small" data-act="addsec">Add section</button></div>`;
+  }
+  html += `<div class="row" style="margin-top:18px;justify-content:space-between">
+    <span>${isEdit ? `<button class="link" data-act="delwo">Delete workout</button>` : ''}${S.edit.name || S.edit.items.length || S.pasteText ? `<button class="link" data-act="clear">Clear</button>` : ''}</span>
+    <button class="btn go" id="savebtn" data-act="savewo">${multi ? `Save ${res.workouts.length} workouts` : isEdit ? 'Save changes' : 'Save workout'}</button></div>`;
+  return html;
+}
+function previewAny(res) {
+  if (!res || res.workouts.length <= 1) {
+    const w = res && res.workouts[0];
+    return (w && (w.name || w.focus) && !(S.edit && S.edit.name) ? `<div style="color:var(--muted);margin-bottom:6px">Will be named <b style="color:var(--ink)">${esc(w.name || 'your workout')}</b>${w.focus ? ' · ' + esc(w.focus.slice(0, 90)) : ''}</div>` : '') + previewHtml(w ? w.items : []);
+  }
+  const hasProg = res.phases.length || res.schedule.some(x => x !== null) || res.weeks;
+  return `<div style="font:800 1.3rem var(--display)">Found ${res.workouts.length} workouts${res.title ? ' · ' + esc(res.title) : ''}</div>` +
+    res.workouts.map(w => `<div style="margin-top:8px"><b>${esc(w.name || 'Workout')}</b> <span style="color:var(--muted)">— ${w.items.filter(x => x.type === 'ex').length} exercises${w.items.some(x => x.type === 'section') ? ', ' + w.items.filter(x => x.type === 'section').length + ' sections' : ''}</span>
+      <div style="color:var(--muted);font-size:.85rem">${esc(w.items.filter(x => x.type === 'ex').slice(0, 4).map(x => `${x.name} ${x.sets}×${x.reps}`).join(' · '))}${w.items.filter(x => x.type === 'ex').length > 4 ? ' …' : ''}</div></div>`).join('') +
+    (S.db && S.canLib ? `<label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-weight:600"><input type="checkbox" id="mkprog" ${S.mkProg !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--red)"> Also set up a program from this${hasProg ? ` (${[res.weeks ? res.weeks + ' weeks' : '', res.phases.length ? res.phases.length + ' phases' : '', res.schedule.some(x => x !== null) ? 'weekly schedule' : ''].filter(Boolean).join(', ')})` : ''}</label>` : '');
+}
+function previewHtml(items) {
+  if (!items.length) return `<span style="color:var(--muted)">Preview shows up here as you type.</span>`;
+  return items.map(it => it.type === 'section' ? `<div style="font:700 1rem var(--display);color:var(--red);margin-top:6px">${esc(it.label)}</div>` :
+    `<div>${esc(it.name)} — <b>${esc(rxText(it))}</b>${it.notes ? ` <span style="color:var(--muted)">· ${esc(it.notes)}</span>` : ''}${!it.reps ? ' <span class="bad">(no sets × reps found)</span>' : ''}</div>`).join('');
+}
+
+function viewHistory() {
+  const logs = [...S.logs].sort((a, b) => b.date - a.date);
+  if (!logs.length) return `<div class="empty"><strong>Nothing logged yet</strong>Finish a workout and it lands here with your numbers.</div>`;
+  const weekAgo = Date.now() - 7 * 864e5;
+  const week = logs.filter(l => l.date > weekAgo);
+  const b = bests();
+  return `<div class="stat-row">
+    <div class="stat"><b>${week.length}</b><span>sessions this week</span></div>
+    <div class="stat"><b>${Math.round(week.reduce((t, l) => t + volume(l), 0)).toLocaleString()}</b><span>lbs moved this week</span></div>
+    <div class="stat"><b>${logs.length}</b><span>sessions total</span></div></div>
+  ${b.length ? `<h2 class="h">Best lifts</h2><div class="pr"><table><thead><tr><th>Exercise</th><th>Top set</th><th>Est. 1RM</th><th>Date</th></tr></thead><tbody>
+    ${b.map(m => `<tr class="${m.estDate > weekAgo ? 'fresh' : ''}"><td>${esc(m.name)}</td><td class="num">${m.top}×${m.topReps}</td><td class="num">${m.est}</td><td>${fmtDate(m.estDate)}</td></tr>`).join('')}
+    </tbody></table></div><p class="note">Highlighted numbers were set this week. Est. 1RM uses the Epley formula.</p>` : ''}
+  <h2 class="h">Sessions</h2>
+  ${logs.map(l => `<div class="log"><button data-act="openlog" data-id="${l.id}" aria-expanded="${S.openLog === l.id}">
+      <span><span class="nm">${esc(l.name)}</span><br><span class="meta">${l.week ? 'Wk ' + l.week + ' · ' : ''}${fmtDate(l.date)} · ${setsDone(l)} sets · ${Math.round(volume(l)).toLocaleString()} lbs${l.rpe ? ' · RPE ' + l.rpe : ''}</span></span><span aria-hidden="true">${S.openLog === l.id ? '−' : '+'}</span></button>
+    ${S.openLog === l.id ? `<div class="body">${l.exercises.filter(e => e.sets.some(s => s.done)).map(e => `<div><b>${esc(e.name)}</b>: ${e.sets.filter(s => s.done).map(s => `${s.weight || 'BW'}×${s.reps || '—'}${s.rpe ? ' @' + s.rpe : ''}`).join(', ')}</div>`).join('')}
+      ${l.notes ? `<div style="margin-top:6px;color:var(--muted)">“${esc(l.notes)}”</div>` : ''}<button class="link" data-act="dellog" data-id="${l.id}">Delete session</button></div>` : ''}</div>`).join('')}`;
+}
+
+function renderDock() { $('#dock').innerHTML = ''; }
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.max(0, s % 60)).padStart(2, '0')}`;
+
+function render() {
+  if (S.tab === 'session' && !S.session) S.tab = 'week';
+  renderTabs();
+  const v = { coach: viewCoach, week: viewWeek, program: viewProgram, library: viewLibrary, session: viewSession, build: viewBuild, history: viewHistory }[S.tab]();
+  $('#main').innerHTML = v;
+  renderDock();
+}
+
+/* ---------- session ---------- */
+function ask(msg, okLabel) {
+  return new Promise(res => {
+    $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="askh"><div class="sheet">
+      <h2 id="askh" style="font-size:1.5rem">${esc(msg)}</h2>
+      <div class="row" style="justify-content:space-between;margin-top:16px"><button class="btn ghost" id="askno">Cancel</button><button class="btn go" id="askyes">${esc(okLabel)}</button></div>
+    </div></div>`;
+    const done = v => { $('#overlay').innerHTML = ''; res(v); };
+    $('#askno').onclick = () => done(false);
+    $('#askyes').onclick = () => done(true);
+    $('#askyes').focus();
+  });
+}
+async function startSession(w) {
+  if (S.session && !(await ask('You have a workout in progress. Replace it?', 'Replace it'))) return;
+  let section = '', sec = '';
+  const exercises = [];
+  const pi = progInfo(), ph = pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.phase : null, p = pi && pi.p;
+  const isMain = n => (p && p.main || []).some(m => m.toLowerCase() === n.toLowerCase());
+  const presetOK = ph && (p.presetWorkouts || []).includes(w.id);
+  for (const orig of w.items) {
+    if (orig.type === 'section') { section = sec = orig.label; continue; }
+    const it = { ...orig };
+    if (ph && ph.main && isMain(it.name)) { if (ph.main.sets) it.sets = ph.main.sets; if (ph.main.reps) it.reps = ph.main.reps; }
+    const rpePre = presetOK && !(p.skipSections || []).includes(sec) ? (ph.preset || '') : '';
+    if (rpePre) it.rpeT = ph.rpe || rpePre;
+    const n = Math.max(1, Math.min(20, parseInt(it.sets) || 1));
+    const last = lastFor(it.name);
+    const load = /^\d+(\.\d+)?$/.test(String(it.load).trim()) ? String(it.load).trim() : '';
+    exercises.push({
+      name: it.name, section, rx: { ...it },
+      sets: Array.from({ length: n }, (_, i) => ({ weight: '', reps: '', rpe: '', done: false, phRPE: rpePre,
+        phW: load || (last && last.sets[Math.min(i, last.sets.length - 1)].weight) || '',
+        phR: /^\d+$/.test(it.reps) ? it.reps : '' }))
+    });
+    section = '';
+  }
+  S.session = { id: newId(), workoutId: w.id, name: w.name, start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
+  saveDraft(); S.tab = 'session'; render(); window.scrollTo(0, 0);
+}
+const saveDraft = () => S.session ? local.set('wt-draft', S.session) : local.del('wt-draft');
+
+function openFinish() {
+  const done = S.session.exercises.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0);
+  let rpe = 0;
+  $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fh"><div class="sheet">
+    <h2 id="fh">Finish ${esc(S.session.name)}</h2>
+    <p class="note">${done} sets checked off. Unchecked sets aren't saved.</p>
+    <label class="f">How hard was it? (session RPE)</label>
+    <div class="rpe" id="rpe">${Array.from({ length: 10 }, (_, i) => `<button data-v="${i + 1}" aria-pressed="false">${i + 1}</button>`).join('')}</div>
+    <label class="f" for="fnotes">Notes</label><textarea class="inp" id="fnotes" style="min-height:70px;font-family:var(--body)" placeholder="How did it feel? Anything to adjust next time?"></textarea>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" id="fcancel">Keep going</button><button class="btn go" id="fsave">Save session</button></div>
+  </div></div>`;
+  $('#rpe').onclick = ev => { const b = ev.target.closest('button'); if (!b) return; rpe = +b.dataset.v; [...$('#rpe').children].forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('#fcancel').onclick = () => $('#overlay').innerHTML = '';
+  $('#fsave').onclick = async () => {
+    const s = S.session;
+    const log = {
+      id: s.id, workoutId: s.workoutId, name: s.name, date: Date.now(), week: s.week || null,
+      mins: Math.max(1, Math.round((Date.now() - s.start) / 60000)), rpe, notes: $('#fnotes').value.trim(),
+      exercises: s.exercises.map(e => ({ name: e.name, sets: e.sets.map(x => ({ weight: x.weight || x.phW || '', reps: x.reps || x.phR || '', rpe: x.rpe || '', done: !!x.done })) }))
+    };
+    if (!(S.db && S.uid)) log._local = true;
+    $('#overlay').innerHTML = '';
+    S.session = null; saveDraft();
+    const idx = S.sched.days.indexOf(log.workoutId);
+    S.tab = idx >= 0 ? 'week' : 'history'; S.openLog = log.id;
+    await store.saveLog(log);
+    render(); toast(idx >= 0 ? 'Session saved — day checked off.' : 'Session saved.');
+  };
+}
+
+/* rest + clock */
+
+
+/* ---------- events ---------- */
+document.addEventListener('click', async ev => {
+  const t = ev.target.closest('[data-tab],[data-act]'); if (!t) return;
+  if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
+  const a = t.dataset.act, id = t.dataset.id, find = () => S.lib.find(w => w.id === id);
+  const ei = +t.dataset.ei, si = +t.dataset.si, i = +t.dataset.i;
+  switch (a) {
+    case 'new': S.edit = { id: null, name: '', focus: '', items: [] }; S.pasteText = ''; S.mode = 'paste'; S.tab = 'build'; render(); break;
+    case 'start': startSession(find()); break;
+    case 'edit': { const w = find(); S.edit = JSON.parse(JSON.stringify(w)); S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'build'; render(); break; }
+    case 'dup': { const w = find(); S.edit = { ...JSON.parse(JSON.stringify(w)), id: null, name: w.name + ' (copy)' }; S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'build'; render(); break; }
+    case 'tick': {
+      const st = S.session.exercises[ei].sets[si]; st.done = !st.done;
+      if (st.done) { if (!st.weight && st.phW) st.weight = st.phW; if (!st.reps && st.phR) st.reps = st.phR; if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
+      saveDraft(); render(); break;
+    }
+    case 'addset': { const ex = S.session.exercises[ei]; const l = ex.sets[ex.sets.length - 1]; ex.sets.push({ weight: '', reps: '', rpe: '', done: false, phRPE: l.phRPE, phW: l.weight || l.phW, phR: l.reps || l.phR }); saveDraft(); render(); break; }
+    case 'rmset': S.session.exercises[ei].sets.pop(); saveDraft(); render(); break;
+    case 'discard': if (await ask('Discard this session? Nothing will be saved.', 'Discard session')) { S.session = null; saveDraft(); S.tab = 'week'; render(); } break;
+    case 'finish': openFinish(); break;
+    case 'mode':
+      if (t.dataset.m === S.mode) break;
+      if (t.dataset.m === 'form') S.edit.items = parseText(S.pasteText); else S.pasteText = toText(S.edit.items);
+      S.mode = t.dataset.m; render(); break;
+    case 'addex': S.edit.items.push({ type: 'ex', name: '', sets: '3', reps: '', load: '', rest: '', notes: '' }); render(); break;
+    case 'addsec': S.edit.items.push({ type: 'section', label: '' }); render(); break;
+    case 'rm': S.edit.items.splice(i, 1); render(); break;
+    case 'up': if (i > 0) { const it = S.edit.items; [it[i - 1], it[i]] = [it[i], it[i - 1]]; render(); } break;
+    case 'clear': S.edit = { id: S.edit.id, name: '', focus: '', items: [] }; S.pasteText = ''; render(); break;
+    case 'savewo': {
+      const e = S.edit;
+      const res = S.mode === 'paste' ? smartParse(S.pasteText) : null;
+      if (res && res.workouts.length > 1) {
+        const now = Date.now(), saved = [];
+        for (const [k, w] of res.workouts.entries()) {
+          const wo = { id: newId(), name: w.name || `Workout ${k + 1}`, focus: w.focus, items: w.items, created: now, updated: now - k };
+          if (!(await store.saveWorkout(wo))) break;
+          saved.push(wo);
+        }
+        if (!saved.length) break;
+        S.edit = null; S.pasteText = '';
+        if (S.mkProg !== false && S.db && S.canLib && saved.length === res.workouts.length) {
+          const di = matchSchedule(res.schedule, res.workouts);
+          const hasPh = res.phases.length > 0;
+          const preset = hasPh ? saved.filter(w => !/plyo|power|speed|sprint|conditioning|mobility|recovery/i.test(w.name + ' ' + w.focus)) : [];
+          const skipRe = /warm|core|care|round|mobility|cool|prep|activation|finisher/i;
+          const main = [];
+          preset.forEach(w => { let secSeen = 0, n = 0; for (const it of w.items) { if (it.type === 'section') { if (skipRe.test(it.label)) { if (n) break; continue; } secSeen++; if (secSeen > 1 && n) break; continue; } if (n < 2) { main.push(it.name); n++; } else break; } });
+          const maxTo = Math.max(0, ...res.phases.map(p => +p.to || 0));
+          S.pedit = { id: null, name: res.title || 'New Program', weeks: res.weeks || maxTo || 6,
+            days: di.map(k => k === null ? null : saved[k].id), phases: res.phases,
+            main: [...new Set(main)], presetWorkouts: preset.map(w => w.id),
+            skipSections: [...new Set(saved.flatMap(w => w.items.filter(it => it.type === 'section' && skipRe.test(it.label)).map(it => it.label)))] };
+          S.tab = 'coach'; S.csub = 'programs'; render(); window.scrollTo(0, 0);
+          toast(`${saved.length} workouts saved. Check the program, then hit Save program.`);
+        } else { S.tab = 'library'; render(); toast(`${saved.length} workouts saved.`); }
+        break;
+      }
+      if (res && res.workouts[0]) { if (!e.name.trim() && res.workouts[0].name) e.name = res.workouts[0].name; if (!(e.focus || '').trim() && res.workouts[0].focus) e.focus = res.workouts[0].focus; }
+      const items = (S.mode === 'paste' ? parseText(S.pasteText) : e.items)
+        .filter(it => it.type === 'section' ? it.label.trim() : it.name.trim());
+      if (!e.name.trim()) { toast('Give the workout a name.'); $('#bname').focus(); break; }
+      if (!items.some(it => it.type === 'ex')) { toast('Add at least one exercise.'); break; }
+      const w = { id: e.id || newId(), name: e.name.trim(), focus: (e.focus || '').trim(), items, created: e.created || Date.now(), updated: Date.now() };
+      if (await store.saveWorkout(w)) { S.edit = null; S.pasteText = ''; S.tab = 'library'; render(); toast('Workout saved.'); }
+      break;
+    }
+    case 'delwo': if (await ask(`Delete “${S.edit.name}”? Logged sessions stay in History.`, 'Delete workout')) { await store.deleteWorkout(S.edit.id); S.edit = null; S.pasteText = ''; S.tab = 'library'; render(); toast('Workout deleted.'); } break;
+    case 'daytick': {
+      const k = wkKey(); const cur = dayDone(i);
+      const doc = S.checks[k] || { kind: 'week', id: k, checked: {} };
+      S.checks[k] = { ...doc, checked: { ...doc.checked, [i]: !cur } };
+      render(); store.saveChecks(k); break;
+    }
+    case 'csub': S.csub = t.dataset.m; render(); break;
+    case 'seed': {
+      try {
+        const b = FS.batch();
+        SEED.library.forEach(w => { if (!S.lib.some(x => x.id === w.id)) b.set(FS.collection('library').doc(w.id), w); });
+        SEED.programs.forEach(p => b.set(FS.collection('programs').doc(p.id), p));
+        await Promise.race([b.commit(), new Promise(r => setTimeout(r, 2500))]);
+        toast('Catcher Off-Season loaded. Assign it in Coach → Athletes.');
+      } catch (e) { toast('Could not load it. Check that your email is set as coach.'); }
+      break;
+    }
+    case 'newprog': S.pedit = { id: null, name: '', weeks: 6, days: PAD7([]), phases: [], main: [], presetWorkouts: [], skipSections: [] }; render(); window.scrollTo(0, 0); break;
+    case 'editprog': S.pedit = progEditFrom(S.programs.find(p => p.id === id)); render(); window.scrollTo(0, 0); break;
+    case 'dupprog': S.pedit = progEditFrom(S.programs.find(p => p.id === id), true); render(); window.scrollTo(0, 0); break;
+    case 'viewprog': S.previewProg = id; S.tab = 'program'; render(); window.scrollTo(0, 0); break;
+    case 'cancelprog': S.pedit = null; render(); break;
+    case 'addphase': { const ps = S.pedit.phases, last = ps[ps.length - 1]; const f = last ? (+last.to || 0) + 1 : 1; ps.push({ from: String(f), to: String(f + 1), name: '', rpe: '', preset: '', msets: '', mreps: '', note: '' }); render(); break; }
+    case 'rmphase': S.pedit.phases.splice(+t.dataset.k, 1); render(); break;
+    case 'delprog': {
+      const n = Object.values(S.assign).filter(a => a.programId === S.pedit.id).length;
+      if (await ask(`Delete “${S.pedit.name}”?${n ? ` ${n} athlete${n === 1 ? ' is' : 's are'} on it and will have no program.` : ''}`, 'Delete program')) { await store.deleteProgram(S.pedit.id); S.pedit = null; render(); toast('Program deleted.'); }
+      break;
+    }
+    case 'saveprog': {
+      const e = S.pedit;
+      if (!e.name.trim()) { toast('Give the program a name.'); $('#pname').focus(); break; }
+      const weeks = Math.max(1, Math.min(52, parseInt(e.weeks) || 6));
+      const days = e.days.map(x => x || null);
+      if (!days.some(Boolean)) { toast('Put at least one workout on the schedule.'); break; }
+      const wos = days.filter(Boolean).map(id => S.lib.find(w => w.id === id)).filter(Boolean);
+      const names = new Set(wos.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)));
+      const phases = e.phases.filter(ph => parseInt(ph.from) && parseInt(ph.to)).map(ph => {
+        const o = { from: parseInt(ph.from), to: parseInt(ph.to), name: ph.name.trim() || `Weeks ${ph.from}–${ph.to}`, rpe: ph.rpe.trim() || ph.preset.trim(), preset: ph.preset.trim(), note: ph.note.trim() };
+        const main = {}; if (ph.msets.trim()) main.sets = ph.msets.trim(); if (ph.mreps.trim()) main.reps = ph.mreps.trim();
+        if (main.sets || main.reps) o.main = main;
+        return o;
+      }).sort((a, b) => a.from - b.from);
+      const pr = { id: e.id || 'p' + newId(), name: e.name.trim(), weeks, days, phases,
+        main: e.main.filter(n => names.has(n)), presetWorkouts: e.presetWorkouts.filter(id => days.includes(id)),
+        skipSections: e.skipSections, updated: Date.now() };
+      if (await store.saveProgram(pr)) { S.pedit = null; render(); toast('Program saved.'); }
+      break;
+    }
+    case 'saveassign': {
+      const u = t.dataset.u, dr = S.adraft[u] || {};
+      if (dr.programId && !dr.start) { toast('Pick a start date.'); break; }
+      if (dr.start && dr.programId) { const [y, m, d] = dr.start.split('-').map(Number); dr.start = isoDate(weekStart(new Date(y, m - 1, d).getTime())); }
+      if (await store.saveAssign(u, dr)) toast(dr.programId ? 'Program assigned.' : 'Saved.');
+      break;
+    }
+    case 'openweek': { const w = +t.dataset.w; S.openWeek = S.openWeek === w ? null : w; render(); break; }
+    case 'openlog': S.openLog = S.openLog === id ? null : id; render(); break;
+    case 'dellog': if (await ask('Delete this session from History?', 'Delete session')) store.deleteLog(id); break;
+  }
+});
+
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.id === 'search') { S.filter = t.value; const pos = t.selectionStart; render(); const s = $('#search'); s.focus(); s.setSelectionRange(pos, pos); return; }
+  if (t.dataset.ei !== undefined && t.dataset.k) { S.session.exercises[+t.dataset.ei].sets[+t.dataset.si][t.dataset.k] = t.value; saveDraft(); return; }
+  if (t.dataset.pe) { S.pedit[t.dataset.pe] = t.value; return; }
+  if (t.dataset.ph !== undefined) { S.pedit.phases[+t.dataset.ph][t.dataset.pf] = t.value; return; }
+  if (t.dataset.al) { (S.adraft[t.dataset.al] ||= {}).label = t.value; return; }
+  if (t.dataset.as) { (S.adraft[t.dataset.as] ||= {}).start = t.value; return; }
+  if (t.dataset.b) { S.edit[t.dataset.b] = t.value; return; }
+  if (t.dataset.f !== undefined && t.dataset.i !== undefined) { S.edit.items[+t.dataset.i][t.dataset.f] = t.value; return; }
+  if (t.id === 'paste') {
+    S.pasteText = t.value; const res = smartParse(t.value), multi = res.workouts.length > 1;
+    $('#preview').innerHTML = previewAny(res);
+    $('#single').style.display = multi ? 'none' : '';
+    const isEdit = S.edit && S.edit.id && S.lib.some(w => w.id === S.edit.id);
+    $('#savebtn').textContent = multi ? `Save ${res.workouts.length} workouts` : isEdit ? 'Save changes' : 'Save workout';
+  }
+});
+
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.dataset.pd !== undefined) { S.pedit.days[+t.dataset.pd] = t.value || null; render(); return; }
+  if (t.dataset.ap) { (S.adraft[t.dataset.ap] ||= {}).programId = t.value; return; }
+  if (t.dataset.pv !== undefined) { S.previewProg = t.value; render(); return; }
+  if (t.id === 'mkprog') { S.mkProg = t.checked; return; }
+  const tog = (arr, v, on) => { const i = arr.indexOf(v); if (on && i < 0) arr.push(v); if (!on && i >= 0) arr.splice(i, 1); };
+  if (t.dataset.cm !== undefined) tog(S.pedit.main, t.dataset.cm, t.checked);
+  if (t.dataset.cw !== undefined) tog(S.pedit.presetWorkouts, t.dataset.cw, t.checked);
+  if (t.dataset.cs !== undefined) tog(S.pedit.skipSections, t.dataset.cs, t.checked);
+});
+
+/* ---------- boot ---------- */
+S.lib = local.get('wt-lib', []);
+S.logs = local.get('wt-logs', []);
+S.session = local.get('wt-draft', null);
+{ const sc = local.get('wt-sched', null); if (sc && Array.isArray(sc.days)) S.sched = sc; }
+S.checks = local.get('wt-checks', {});
+if (S.session) S.tab = 'session';
+render();
+
+/* ---------- Firebase ---------- */
+const SEED = {"library":[{"created":1790690004000,"focus":"Monday · Strength + Size · Build lower-body muscle and strength for squatting, throwing, blocking and explosiveness","id":"catcher-d1","items":[{"label":"Strength + Size","type":"section"},{"load":"","name":"Back Squat","notes":"","reps":"6","rest":"150","sets":"4","type":"ex"},{"load":"","name":"Romanian Deadlift","notes":"","reps":"8","rest":"120","sets":"4","type":"ex"},{"load":"","name":"Bulgarian Split Squat","notes":"","reps":"8/leg","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Barbell Glute Bridge","notes":"","reps":"10-12","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Walking Lunge","notes":"","reps":"10/leg","rest":"75","sets":"2","type":"ex"},{"load":"","name":"Standing Calf Raise","notes":"","reps":"12-15","rest":"60","sets":"3","type":"ex"},{"label":"Core","type":"section"},{"load":"","name":"Pallof Press","notes":"","reps":"10/side","rest":"45","sets":"3","type":"ex"},{"load":"","name":"Dead Bug","notes":"","reps":"8/side","rest":"45","sets":"3","type":"ex"}],"name":"Day 1 — Lower Body","updated":1790690004000},{"created":1790690003000,"focus":"Tuesday · Strength + Size · Finish with shoulder/arm care","id":"catcher-d2","items":[{"label":"Strength + Size","type":"section"},{"load":"","name":"Bench Press","notes":"","reps":"6","rest":"150","sets":"4","type":"ex"},{"load":"","name":"Pull-Ups","notes":"","reps":"6-10","rest":"120","sets":"4","type":"ex"},{"load":"","name":"Incline DB Bench","notes":"","reps":"8-10","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Chest-Supported Row","notes":"","reps":"8-10","rest":"90","sets":"4","type":"ex"},{"load":"","name":"Landmine Press","notes":"","reps":"8/side","rest":"75","sets":"3","type":"ex"},{"load":"","name":"Face Pull","notes":"","reps":"12-15","rest":"60","sets":"3","type":"ex"},{"load":"","name":"DB Hammer Curl","notes":"","reps":"10-12","rest":"60","sets":"3","type":"ex"},{"load":"","name":"Cable Triceps Pressdown","notes":"","reps":"10-12","rest":"60","sets":"3","type":"ex"},{"label":"Shoulder/Arm Care — 2 rounds","type":"section"},{"load":"","name":"Band External Rotation","notes":"","reps":"12","rest":"30","sets":"2","type":"ex"},{"load":"","name":"Band Pull-Apart","notes":"","reps":"15","rest":"30","sets":"2","type":"ex"},{"load":"","name":"Scap Push-Up","notes":"","reps":"10","rest":"30","sets":"2","type":"ex"},{"load":"","name":"Serratus Wall Slide","notes":"","reps":"10","rest":"30","sets":"2","type":"ex"}],"name":"Day 2 — Upper Body","updated":1790690003000},{"created":1790690002000,"focus":"Thursday · Only dedicated plyo day · Not conditioning — every jump and throw explosive, rest enough to keep quality","id":"catcher-d3","items":[{"label":"Warm-up — 2 rounds","type":"section"},{"load":"","name":"Lateral Shuffle","notes":"","reps":"10yd","rest":"","sets":"2","type":"ex"},{"load":"","name":"A-Skip","notes":"","reps":"10yd","rest":"","sets":"2","type":"ex"},{"load":"","name":"Hip Airplane","notes":"","reps":"5/side","rest":"","sets":"2","type":"ex"},{"load":"","name":"Lateral Lunge","notes":"","reps":"6/side","rest":"","sets":"2","type":"ex"},{"load":"","name":"Pogo Jumps (warm-up)","notes":"","reps":"15","rest":"","sets":"2","type":"ex"},{"load":"","name":"Bodyweight Squat","notes":"","reps":"10","rest":"","sets":"2","type":"ex"},{"label":"Jumping","type":"section"},{"load":"","name":"Pogo Jumps","notes":"","reps":"15","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Countermovement Jump","notes":"","reps":"4","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Broad Jump","notes":"","reps":"3","rest":"90","sets":"3","type":"ex"},{"label":"Lateral/Catcher Power","type":"section"},{"load":"","name":"Lateral Bound → Stick","notes":"","reps":"4/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Skater Jump","notes":"","reps":"5/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Lateral Shuffle → Bound","notes":"","reps":"3/side","rest":"90","sets":"3","type":"ex"},{"label":"Pop-Up Power","type":"section"},{"load":"","name":"Split-Stance Jump","notes":"","reps":"4/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Kneeling → Jump","notes":"","reps":"4","rest":"90","sets":"3","type":"ex"},{"label":"Rotational Power","type":"section"},{"load":"","name":"Rotational Med-Ball Scoop Toss","notes":"","reps":"4/side","rest":"90","sets":"4","type":"ex"},{"load":"","name":"Shotput Med-Ball Throw","notes":"","reps":"4/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Overhead Med-Ball Slam","notes":"","reps":"5","rest":"90","sets":"3","type":"ex"},{"label":"Catcher Strength","type":"section"},{"load":"","name":"Front-Foot Elevated Split Squat","notes":"","reps":"6/leg","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Copenhagen Plank","notes":"","reps":"20-30s/side","rest":"45","sets":"3","type":"ex"},{"load":"","name":"Farmer Carry","notes":"","reps":"30-40yd","rest":"60","sets":"3","type":"ex"}],"name":"Day 3 — Catcher Plyometrics + Power","updated":1790690002000},{"created":1790690001000,"focus":"Saturday · Strength + Hypertrophy · Target ~50–60 minutes","id":"catcher-d4","items":[{"label":"Strength + Hypertrophy","type":"section"},{"load":"","name":"Incline DB Bench Press","notes":"Rest 2–3 min · This is your primary heavy lift.","reps":"6-8","rest":"","sets":"3","type":"ex"},{"load":"","name":"Weighted Back Extension","notes":"Rest 90 sec · Hold a plate or DB at the chest. Squeeze glutes at the top.","reps":"8-12","rest":"","sets":"3","type":"ex"},{"load":"","name":"Front-Foot Elevated Reverse Lunge","notes":"Rest 90 sec · Unilateral leg strength without another squat variation.","reps":"8/leg","rest":"","sets":"3","type":"ex"},{"load":"","name":"Chest-Supported Row","notes":"Rest 90 sec","reps":"8-10","rest":"","sets":"3","type":"ex"},{"load":"","name":"Nordic Hamstring Curl","notes":"Rest 90 sec · Use assistance if needed. Quality over reps.","reps":"5-8","rest":"","sets":"3","type":"ex"},{"load":"","name":"Leg Extension","notes":"Rest 60–75 sec · Controlled eccentric + hard quad contraction.","reps":"10-15","rest":"","sets":"3","type":"ex"},{"load":"","name":"Landmine Press","notes":"Rest 60–90 sec","reps":"8/side","rest":"","sets":"2","type":"ex"},{"label":"Core Superset — 2 rounds","type":"section"},{"load":"","name":"Hanging Knee Raise","notes":"","reps":"10-12","rest":"","sets":"2","type":"ex"},{"load":"","name":"Suitcase Carry","notes":"","reps":"30yd/side","rest":"","sets":"2","type":"ex"}],"name":"Day 4 — Full Body","updated":1790690001000}],"programs":[{"days":["catcher-d1","catcher-d2",null,"catcher-d3",null,"catcher-d4",null],"id":"catcher-offseason","main":["Back Squat","Romanian Deadlift","Bench Press","Pull-Ups","Incline DB Bench Press"],"name":"Catcher Off-Season","phases":[{"from":1,"main":{"reps":"6-8"},"name":"Foundation","note":"Learn the movements. Don't chase max weights.","preset":"7","rpe":"7","to":2},{"from":3,"main":{"reps":"5-6","sets":"4"},"name":"Build","note":"Add weight when all reps are clean.","preset":"8","rpe":"7.5–8","to":4},{"from":5,"main":{"reps":"4-5","sets":"4"},"name":"Strength","note":"Still don't grind or fail reps.","preset":"8.5","rpe":"8–8.5","to":6}],"presetWorkouts":["catcher-d1","catcher-d2","catcher-d4"],"skipSections":["Core","Shoulder/Arm Care — 2 rounds","Core Superset — 2 rounds"],"updated":1790712200000,"weeks":6}]};
+const CFG = window.NWNC_CONFIG || {};
+const COACHES = (CFG.coachEmails || []).map(x => String(x).trim().toLowerCase());
+let FS = null, AUTH = null, unsubs = [];
+const fast = p => Promise.race([p, new Promise(r => setTimeout(r, 2500))]);
+function wrapDb(fs) {
+  return {
+    collection: path => { const c = fs.collection(path); return {
+      doc: id => { const d = c.doc(id); return { set: v => fast(d.set(v)), delete: () => fast(d.delete()) }; },
+      onSnapshot: (next, err) => c.onSnapshot(next, err) }; },
+    doc: path => fs.doc(path)
+  };
+}
+function showAuth(on) { $('#auth').hidden = !on; document.querySelector('.wrap').style.display = on ? 'none' : ''; }
+const AUTH_MSG = {
+  'auth/invalid-email': 'That email doesn\'t look right.',
+  'auth/missing-password': 'Enter your password.',
+  'auth/invalid-credential': 'Email or password is wrong.',
+  'auth/wrong-password': 'Email or password is wrong.',
+  'auth/user-not-found': 'No account with that email. Tap “Create an account.”',
+  'auth/email-already-in-use': 'That email already has an account. Sign in instead.',
+  'auth/weak-password': 'Password needs at least 6 characters.',
+  'auth/too-many-requests': 'Too many tries. Wait a minute and try again.',
+  'auth/network-request-failed': 'No connection. Check your signal and try again.',
+  'auth/popup-closed-by-user': '',
+  'auth/unauthorized-domain': 'This web address isn\'t approved in Firebase yet (Authentication → Settings → Authorized domains).'
+};
+const authErr = e => { $('#aerr').textContent = AUTH_MSG[e && e.code] ?? ((e && e.message) || 'Something went wrong.'); };
+let signingUp = false;
+function wireAuth() {
+  $('#aswitch').onclick = () => { signingUp = !signingUp; $('#nameRow').hidden = !signingUp; $('#abtn').textContent = signingUp ? 'Create account' : 'Sign in'; $('#aswitch').textContent = signingUp ? 'Have an account? Sign in' : 'New here? Create an account'; $('#apass').autocomplete = signingUp ? 'new-password' : 'current-password'; $('#aerr').textContent = ''; };
+  $('#abtn').onclick = async () => {
+    const email = $('#aemail').value.trim(), pass = $('#apass').value, name = $('#aname').value.trim();
+    $('#aerr').textContent = '';
+    if (signingUp && !name) { $('#aerr').textContent = 'Add your name so your coach knows who you are.'; return; }
+    $('#abtn').disabled = true;
+    try {
+      if (signingUp) {
+        const cred = await AUTH.createUserWithEmailAndPassword(email, pass);
+        await cred.user.updateProfile({ displayName: name });
+        FS.collection('roster').doc(cred.user.uid).set({ id: cred.user.uid, name, email: cred.user.email || email, lastSeen: Date.now() }, { merge: true }).catch(() => {});
+        $('#who2').textContent = name;
+      } else await AUTH.signInWithEmailAndPassword(email, pass);
+    } catch (e) { authErr(e); }
+    $('#abtn').disabled = false;
+  };
+  $('#apass').onkeydown = ev => { if (ev.key === 'Enter') $('#abtn').click(); };
+  $('#areset').onclick = async () => {
+    const email = $('#aemail').value.trim();
+    if (!email) { $('#aerr').textContent = 'Type your email above first, then tap “Forgot password.”'; return; }
+    try { await AUTH.sendPasswordResetEmail(email); $('#aerr').textContent = 'Reset link sent. Check your email.'; } catch (e) { authErr(e); }
+  };
+  $('#gbtn').onclick = async () => {
+    const p = new firebase.auth.GoogleAuthProvider();
+    try { await AUTH.signInWithPopup(p); }
+    catch (e) { if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) { try { await AUTH.signInWithRedirect(p); } catch (e2) { authErr(e2); } } else authErr(e); }
+  };
+  $('#signout').onclick = async () => { if (S.session && !(await ask('You have a workout in progress. Sign out anyway?', 'Sign out'))) return; S.session = null; saveDraft(); AUTH.signOut(); };
+}
+function startData(u) {
+  unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = [];
+  const email = (u.email || '').toLowerCase();
+  S.db = wrapDb(FS); S.uid = u.uid; S.canLib = COACHES.includes(email);
+  S.lib = []; S.logs = []; S.programs = []; S.assign = {}; S.roster = []; S.checks = {}; S.ppl = {};
+  if (S.tab === 'coach' && !S.canLib) S.tab = 'week';
+  $('#who2').textContent = u.displayName || u.email || '';
+  applyMine(); render();
+  FS.collection('roster').doc(u.uid).set(Object.assign({ id: u.uid, email: u.email || '', lastSeen: Date.now() }, u.displayName ? { name: u.displayName } : {}), { merge: true }).catch(() => {});
+  const on = (ref, fn) => unsubs.push(ref.onSnapshot(fn, err => console.warn('listen', err && err.code)));
+  on(FS.collection('library'), snap => { S.lib = snap.docs.map(d => d.data()); render(); });
+  on(FS.collection('programs'), snap => { S.programs = snap.docs.map(d => d.data()); applyMine(); render(); });
+  if (S.canLib) {
+    on(FS.collection('assign'), snap => { const a = {}; snap.docs.forEach(d => { const x = d.data(); a[x.uid || d.id] = x; }); S.assign = a; applyMine(); render(); });
+    on(FS.collection('roster'), snap => {
+      S.roster = snap.docs.map(d => d.data()).filter(r => r.id);
+      S.ppl = Object.fromEntries(S.roster.map(r => [r.id, { name: r.name || '', avatarUrl: r.photo || '' }]));
+      render();
+    });
+  } else {
+    on(FS.doc('assign/' + u.uid), snap => { S.assign = snap.exists ? { [u.uid]: snap.data() } : {}; applyMine(); render(); });
+  }
+  on(FS.collection('users/' + u.uid + '/data'), snap => {
+    const all = snap.docs.map(d => d.data());
+    S.logs = all.filter(x => x.kind !== 'week');
+    const checks = {}; all.filter(x => x.kind === 'week').forEach(x => checks[x.id] = x);
+    S.checks = checks;
+    render();
+  });
+}
+(function bootFirebase() {
+  const fb = CFG.firebase || {};
+  if (!window.firebase || !fb.apiKey || /PASTE/i.test(fb.apiKey)) {
+    showAuth(true);
+    $('#authForm').innerHTML = `<div class="setup"><b>Almost there.</b> This copy of the app isn't connected to Firebase yet. Open <b>firebase-config.js</b>, paste in your Firebase settings and your coach email, then upload the folder again.</div>`;
+    return;
+  }
+  firebase.initializeApp(fb);
+  FS = firebase.firestore();
+  try { FS.settings({ ignoreUndefinedProperties: true }); } catch (e) {}
+  FS.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+  AUTH = firebase.auth();
+  wireAuth();
+  AUTH.getRedirectResult().catch(authErr);
+  AUTH.onAuthStateChanged(u => {
+    if (!u) { unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; S.db = null; S.uid = null; S.canLib = false; showAuth(true); return; }
+    showAuth(false); startData(u);
+  });
+})();
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
