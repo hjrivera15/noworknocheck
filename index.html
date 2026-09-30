@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>No Work No Check</title>
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#e4e7ea" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141a22" media="(prefers-color-scheme: dark)">
@@ -259,7 +259,7 @@ h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1><img src="icons/logo.webp" alt="No Work No Check" width="84" height="84"></h1><div class="sub">Build Bigger.<br>Move Faster.<br>Get Stronger.</div></div>
+    <div class="brand"><h1><img src="logo.webp" alt="No Work No Check" width="84" height="84"></h1><div class="sub">Build Bigger.<br>Move Faster.<br>Get Stronger.</div></div>
     <div class="acct"><div id="who2"></div><button class="link" id="signout">Sign out</button></div>
   </header>
   <nav class="tabs" role="tablist" id="tabs"></nav>
@@ -269,7 +269,7 @@ h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
 <div id="overlay"></div>
 <div id="toast" class="toast" hidden></div>
 <div id="auth" hidden><div class="auth-card">
-  <img src="icons/logo.webp" alt="No Work No Check">
+  <img src="logo.webp" alt="No Work No Check">
   <p class="tag">Build Bigger. Move Faster. Get Stronger.</p>
   <div id="authForm">
     <div id="nameRow" hidden><label for="aname">Your name</label><input id="aname" autocomplete="name" placeholder="First and last name"></div>
@@ -286,7 +286,19 @@ h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
+<script src="firebase-config.js?v=2"></script>
+<script>window.NWNC_CONFIG = window.NWNC_CONFIG || {
+  coachEmails: ["hjrivera1534@gmail.com"],
+
+  firebase: {
+    apiKey: "AIzaSyA-79FjfekVuIjoL3nmFGLS8NPrt-lpr7Q",
+    authDomain: "no-work-no-check.firebaseapp.com",
+    projectId: "no-work-no-check",
+    storageBucket: "no-work-no-check.firebasestorage.app",
+    messagingSenderId: "550733551065",
+    appId: "1:550733551065:web:d2296fd43f86fc925f35c8"
+  }
+};</script>
 
 <script>
 (() => {
@@ -1184,7 +1196,12 @@ function startData(u) {
 }
 (function bootFirebase() {
   const fb = CFG.firebase || {};
-  if (!window.firebase || !fb.apiKey || /PASTE/i.test(fb.apiKey)) {
+  if (!window.firebase) {
+    showAuth(true);
+    $('#authForm').innerHTML = `<div class="setup"><b>Couldn't load sign-in.</b> The app couldn't reach Google's sign-in service. Check your internet connection, turn off any content or ad blocker for this site, then reload.</div>`;
+    return;
+  }
+  if (!fb.apiKey || /PASTE/i.test(fb.apiKey)) {
     showAuth(true);
     $('#authForm').innerHTML = `<div class="setup"><b>Almost there.</b> This copy of the app isn't connected to Firebase yet. Open <b>firebase-config.js</b>, paste in your Firebase settings and your coach email, then upload the folder again.</div>`;
     return;

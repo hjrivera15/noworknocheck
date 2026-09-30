@@ -1,3 +1,8 @@
+// ============================================================
+//  No Work No Check — settings
+//  coachEmails: people who get the Coach + Add tabs (lowercase).
+//  firebase: your project's web app settings (not secret).
+// ============================================================
 window.NWNC_CONFIG = {
   coachEmails: ["hjrivera1534@gmail.com"],
 
