@@ -490,6 +490,21 @@ function matchSchedule(sched, wos) {
 }
 const toText = items => items.map(it => it.type === 'section' ? it.label + ':' :
   `${it.name}${it.sets || it.reps ? ` ${it.sets || 1}x${it.reps || ''}` : ''}${it.load ? ` @ ${it.load}` : ''}${it.notes ? ` - ${it.notes}` : ''}`).join('\n');
+/* week-specific blocks: a section labeled "Week 2 - ..." or "Week 1 and Week 4 - ..." only shows/runs in those program weeks */
+function secWeeks(label) {
+  const pre = String(label || '').split(/\s+[-–—]\s+|:/)[0];
+  if (!/^(weeks?|wks?)\s*\d/i.test(pre)) return null;
+  const set = new Set();
+  for (const m of pre.matchAll(/(\d+)(?:\s*(?:[-–—]|to)\s*(\d+))?/gi)) { const a = +m[1], b = +(m[2] || m[1]); for (let k = a; k <= b && k - a < 60; k++) set.add(k); }
+  return set.size ? set : null;
+}
+function itemsForWeek(items, wk) {
+  if (!wk) return items;
+  let keep = true;
+  return items.filter(it => { if (it.type === 'section') { const ws = secWeeks(it.label); keep = !ws || ws.has(wk); } return keep; });
+}
+const curWk = () => { const pi = progInfo(); return pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : 0; };
+const weekBlock = (w, wk) => wk ? (w.items.find(it => it.type === 'section' && secWeeks(it.label) && secWeeks(it.label).has(wk)) || {}).label || '' : '';
 const rxText = it => `${it.sets || 1} × ${it.reps || '—'}${it.load ? ' @ ' + it.load : ''}`;
 
 /* ---------- derived ---------- */
@@ -552,7 +567,7 @@ function weekDetail(wn, ws, pi) {
     const w = id && S.lib.find(x => x.id === id); if (!w) return;
     const dt = new Date(ws); dt.setDate(ws.getDate() + i);
     let sec = '';
-    out += `<div class="wd"><h4>${DAYS[i].slice(0, 3)} ${dt.getMonth() + 1}/${dt.getDate()} — ${esc(w.name)}${dayDone(i, ws) ? '<span class="ok">✓ Done</span>' : ''}</h4><ul>${w.items.map(it => {
+    out += `<div class="wd"><h4>${DAYS[i].slice(0, 3)} ${dt.getMonth() + 1}/${dt.getDate()} — ${esc(w.name)}${dayDone(i, ws) ? '<span class="ok">✓ Done</span>' : ''}</h4><ul>${itemsForWeek(w.items, wn).map(it => {
       if (it.type === 'section') { sec = it.label; return `<li class="sec">${esc(it.label)}</li>`; }
       return `<li><span>${esc(it.name)}</span><span class="rx">${esc(phaseRx(w.id, it, sec, ph, pi.p))}</span></li>`;
     }).join('')}</ul></div>`;
@@ -602,7 +617,7 @@ function viewWeek() {
     if (w.missing) return `<div class="day rest"><span class="rest-dot" aria-hidden="true">—</span><div class="dinfo">${label}<div class="dw">Workout was removed</div></div></div>`;
     return `<div class="day ${isDone ? 'done' : ''} ${i === today ? 'today' : ''}">
       <button class="chk" data-act="daytick" data-i="${i}" aria-pressed="${!!isDone}" aria-label="Mark ${DAYS[i]} ${isDone ? 'not done' : 'done'}">✓</button>
-      <div class="dinfo">${label}<div class="dw">${esc(w.name)}</div>${w.focus ? `<div class="dfocus">${esc(w.focus)}</div>` : ''}</div>
+      <div class="dinfo">${label}<div class="dw">${esc(w.name)}</div>${weekBlock(w, curWk()) ? `<div class="dfocus"><b>This week:</b> ${esc(weekBlock(w, curWk()))}</div>` : ''}${w.focus ? `<div class="dfocus">${esc(w.focus)}</div>` : ''}</div>
       ${isDone ? '' : `<button class="btn go small" data-act="start" data-id="${w.id}">Start</button>`}</div>`;
   }).join('');
   if (prog) html += prog.grid;
@@ -879,7 +894,7 @@ async function startSession(w) {
   const pi = progInfo(), ph = pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.phase : null, p = pi && pi.p;
   const isMain = n => (p && p.main || []).some(m => m.toLowerCase() === n.toLowerCase());
   const presetOK = ph && (p.presetWorkouts || []).includes(w.id);
-  for (const orig of w.items) {
+  for (const orig of itemsForWeek(w.items, pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : 0)) {
     if (orig.type === 'section') { section = sec = orig.label; continue; }
     const it = { ...orig };
     if (ph && ph.main && isMain(it.name)) { if (ph.main.sets) it.sets = ph.main.sets; if (ph.main.reps) it.reps = ph.main.reps; }
