@@ -1,5 +1,5 @@
 // No Work No Check — offline support. Bump VERSION when you upload a new build.
-const VERSION = 'nwnc-v2';
+const VERSION = 'nwnc-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './firebase-config.js',
   './logo.webp', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
