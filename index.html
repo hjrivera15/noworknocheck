@@ -119,6 +119,15 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .coachmsg a{color:var(--red)}
 .coachmsg.phasemsg{border-left-color:var(--ink)}
 .coachmsg.phasemsg .cl{color:var(--muted)}
+.coachmsg.mine{border-left-color:var(--plate);background:color-mix(in srgb,var(--plate) 14%,var(--panel))}
+.coachmsg.mine .cl{color:var(--ink)}
+.cue2{margin-top:6px;padding:6px 10px;border-radius:4px;background:color-mix(in srgb,var(--plate) 18%,transparent);border-left:4px solid var(--plate);font-size:.92rem;white-space:pre-wrap}
+.cue2 b{font:700 .75rem var(--body);letter-spacing:.05em;text-transform:uppercase;margin-right:4px}
+.ntag{display:inline-block;background:var(--plate);color:#1a1a1a;font:700 .72rem var(--body);padding:1px 7px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.cnex{margin-top:10px}
+.cnex label{display:block;font-weight:600;font-size:.88rem;margin-bottom:3px}
+.cnex input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+.sheet{max-height:88vh;overflow:auto}
 /* progress */
 .lift{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:8px}
 .lift>button{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;width:100%;border:0;background:transparent;padding:10px 12px;text-align:left}
@@ -366,7 +375,7 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 const S = {
-  openWeek: null, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
+  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
   db: null, uid: null, canLib: false, filter: '', openLog: null, rest: null
 };
 
@@ -719,7 +728,7 @@ function viewWeek() {
     if (w.missing) return `<div class="day rest"><span class="rest-dot" aria-hidden="true">—</span><div class="dinfo">${label}<div class="dw">Workout was removed</div></div></div>`;
     return `<div class="day ${isDone ? 'done' : ''} ${i === today ? 'today' : ''}">
       <button class="chk" data-act="daytick" data-i="${i}" aria-pressed="${!!isDone}" aria-label="Mark ${DAYS[i]} ${isDone ? 'not done' : 'done'}">✓</button>
-      <div class="dinfo">${label}<div class="dw">${esc(w.name)}</div>${w.focus ? `<div class="dfocus">${esc(w.focus)}</div>` : ''}</div>
+      <div class="dinfo">${label}<div class="dw">${esc(w.name)}${S.cnotes[w.id] ? '<span class="ntag">📝 Note for you</span>' : ''}</div>${w.focus ? `<div class="dfocus">${esc(w.focus)}</div>` : ''}</div>
       ${isDone ? '' : `<button class="btn go small" data-act="start" data-id="${w.id}">Start</button>`}</div>`;
   }).join('');
   if (prog) html += prog.grid;
@@ -824,6 +833,12 @@ function viewAthleteDetail(uid) {
       return `<div class="dayrow"><span><b>${DAYS[i].slice(0, 3)} ${dt.getMonth() + 1}/${dt.getDate()}</b> · ${esc(wo ? wo.name : 'Workout')}</span>${st}</div>`;
     }).join('') + '</div>';
   }
+  if (w) {
+    const wids = [...new Set(w.days.filter(Boolean))], cns = d.cnotes || {};
+    html += `<h2 class="h">Personal notes</h2><p class="note" style="margin-top:-4px">Only ${esc(name)} sees these, on top of the workout and under each exercise.</p>` +
+      wids.map(id => { const wo = S.lib.find(x => x.id === id); if (!wo) return ''; const c = cns[id], n = c ? (c.text ? 1 : 0) + Object.values(c.ex || {}).filter(Boolean).length : 0;
+        return `<button class="exi" data-act="cnote" data-u="${uid}" data-w="${id}"><span><b>${esc(wo.name)}</b><br><span class="s ${n ? 'y' : ''}">${n ? `✓ ${n} note${n === 1 ? '' : 's'}${c.updated ? ' · ' + shortDate(c.updated) : ''}` : 'No notes'}</span></span><span aria-hidden="true">✎</span></button>`; }).join('');
+  }
   html += `<h2 class="h">Maxes</h2>${maxListHtml(uid, w && w.pr, d.maxes || {}, d.logs || [], true)}`;
   if ((d.body || []).length || num((d.prof || {}).heightIn)) html += `<h2 class="h">Body</h2>${bodySummary(d.body || [], d.prof || {})}<details><summary class="link" style="cursor:pointer">All measurements</summary>${bodyHistory(d.body || [], false)}</details>`;
   if (!logs.length) return html + '<p class="note" style="margin-top:14px">No workouts logged yet.</p>';
@@ -911,6 +926,8 @@ function viewSession() {
   const wo = S.lib.find(x => x.id === s.workoutId), focus = (wo && wo.focus) || s.focus || '';
   const pi = progInfo(), ph = pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.phase : null;
   let html = `<div class="sess-head"><h2>${esc(s.name)}</h2></div>`;
+  const cn = S.cnotes[s.workoutId] || {};
+  if (cn.text) html += `<div class="coachmsg mine"><span class="cl">Just for you · from your coach</span>${linkify(cn.text)}</div>`;
   if (focus) html += `<div class="coachmsg"><span class="cl">From your coach</span>${linkify(focus)}</div>`;
   if (ph && (ph.name || ph.note)) html += `<div class="coachmsg phasemsg"><span class="cl">Week ${pi.wk} · ${esc(ph.name || '')}${ph.rpe ? ' · RPE ' + esc(ph.rpe) : ''}</span>${esc(ph.note || '')}</div>`;
   s.exercises.forEach((ex, ei) => {
@@ -919,6 +936,7 @@ function viewSession() {
     html += `<section class="ex"><div class="ex-h"><h3>${esc(ex.name)}${infoBtn(ex.name)}</h3>
       <div class="rx">${esc(rxText(ex.rx))}${ex.rx.pctInfo ? ` <span class="pctw">${esc(ex.rx.pctInfo)}</span>` : ''}${ex.rx.rpeT ? ' · RPE ' + esc(ex.rx.rpeT) : ''}</div>
       ${ex.rx.notes ? `<div class="cue">${esc(ex.rx.notes)}</div>` : ''}
+      ${((S.cnotes[s.workoutId] || {}).ex || {})[exKey(ex.name)] ? `<div class="cue2"><b>For you</b>${linkify(S.cnotes[s.workoutId].ex[exKey(ex.name)])}</div>` : ''}
       ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => `${x.weight || 'BW'}×${x.reps}${x.rpe ? ' @' + x.rpe : ''}`).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
       </div>
       <table class="sets"><thead><tr><th>Set</th><th>Weight</th><th>Reps</th><th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
@@ -1064,6 +1082,37 @@ function viewTeamMaxes() {
   ${ppl.map(r => { const mx = (S.athData[r.id] || {}).maxes || {}; const nm = (S.ppl[r.id] || {}).name || (S.assign[r.id] || {}).label || 'Unnamed';
     return `<tr><td>${esc(nm)}</td>${lifts.map(l => { const m = mx[exKey(l)]; return `<td class="cell ${m ? '' : 'empty'}" data-act="setmax" data-u="${r.id}" data-n="${esc(l)}">${m ? num(m.oneRM) : '+'}</td>`; }).join('')}</tr>`; }).join('')}
   </tbody></table></div>`;
+}
+
+/* ---------- personal coach notes ---------- */
+function openCNote(uid, wid) {
+  const wo = S.lib.find(x => x.id === wid); if (!wo) return;
+  const d = S.athData[uid] || {}, c = (d.cnotes || {})[wid] || { ex: {} };
+  const name = (S.ppl[uid] || {}).name || (S.assign[uid] || {}).label || 'this athlete';
+  const exs = [...new Set(wo.items.filter(i => i.type === 'ex').map(i => i.name))];
+  $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cnh"><div class="sheet">
+    <h2 id="cnh">${esc(wo.name)}</h2>
+    <p class="note" style="margin:0">Notes for <b>${esc(name)}</b> only. Leave a box empty to skip it.</p>
+    <label class="f" for="cnw">Note for the whole workout</label>
+    <textarea id="cnw" style="min-height:90px" placeholder="e.g. Keep bench at 185 this week — shoulder still sore.">${esc(c.text || '')}</textarea>
+    <div style="font-weight:700;margin-top:14px">Notes on specific exercises</div>
+    ${exs.map((n, i) => `<div class="cnex"><label for="cne${i}">${esc(n)}</label><input id="cne${i}" data-exn="${esc(n)}" value="${esc((c.ex || {})[exKey(n)] || '')}" placeholder="optional"></div>`).join('')}
+    <div class="row" style="justify-content:space-between;margin-top:16px"><span><button class="btn ghost" id="cnclose">Cancel</button> ${c.id ? '<button class="link" id="cnclear">Clear all</button>' : ''}</span><button class="btn go" id="cnsave">Save notes</button></div>
+  </div></div>`;
+  const close = () => $('#overlay').innerHTML = '';
+  const ref = S.db.collection('users/' + uid + '/data').doc('cn-' + wid);
+  const fail = e => toast(e && e.code === 'permission-denied' ? 'Not saved: publish the updated Firebase rules first.' : 'Not saved. Try again.');
+  $('#cnclose').onclick = close;
+  if ($('#cnclear')) $('#cnclear').onclick = async () => { try { await ref.delete(); close(); toast('Notes cleared.'); } catch (e) { fail(e); } };
+  $('#cnsave').onclick = async () => {
+    const text = $('#cnw').value.trim(), ex = {};
+    document.querySelectorAll('[data-exn]').forEach(inp => { const v = inp.value.trim(); if (v) ex[exKey(inp.dataset.exn)] = v; });
+    try {
+      if (!text && !Object.keys(ex).length) await ref.delete();
+      else await ref.set({ kind: 'cnote', id: 'cn-' + wid, workoutId: wid, text, ex, updated: Date.now() });
+      close(); toast(`Saved. Only ${name} sees these.`);
+    } catch (e) { fail(e); }
+  };
 }
 
 /* ---------- exercise info ---------- */
@@ -1388,6 +1437,7 @@ document.addEventListener('click', async ev => {
     case 'openweek': { const w = +t.dataset.w; S.openWeek = S.openWeek === w ? null : w; render(); break; }
     case 'info': openInfo(t.dataset.n); break;
     case 'setmax': openMax(t.dataset.u, t.dataset.n); break;
+    case 'cnote': openCNote(t.dataset.u, t.dataset.w); break;
     case 'saveheight': {
       const ft = num(S.bdraft.ft), inch = num(S.bdraft.inch), total = ft * 12 + inch;
       if (total < 36 || total > 96) { toast('Enter height in feet and inches, e.g. 5 and 10.'); break; }
@@ -1516,12 +1566,12 @@ function wireAuth() {
   $('#signout').onclick = async () => { if (S.session && !(await ask('You have a workout in progress. Sign out anyway?', 'Sign out'))) return; S.session = null; saveDraft(); AUTH.signOut(); };
 }
 function splitData(all) {
-  const checks = {}, body = [], logs = [], maxes = {}; let prof = {};
-  all.forEach(x => { if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
-  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes };
+  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}; let prof = {};
+  all.forEach(x => { if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
+  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes };
 }
 function startData(u) {
-  unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; athSubs = {}; S.athData = {}; S.openAth = null; S.exinfo = {}; S.body = []; S.prof = {}; S.bdraft = {}; S.maxes = {};
+  unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; athSubs = {}; S.athData = {}; S.openAth = null; S.exinfo = {}; S.body = []; S.prof = {}; S.bdraft = {}; S.maxes = {}; S.cnotes = {};
   const email = (u.email || '').toLowerCase();
   S.db = wrapDb(FS); S.uid = u.uid; S.canLib = COACHES.includes(email);
   S.lib = []; S.logs = []; S.programs = []; S.assign = {}; S.roster = []; S.checks = {}; S.ppl = {};
@@ -1554,7 +1604,7 @@ function startData(u) {
   }
   on(FS.collection('users/' + u.uid + '/data'), snap => {
     const sd = splitData(snap.docs.map(d => d.data()));
-    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes;
+    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes;
     render();
   });
 }
