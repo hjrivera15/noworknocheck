@@ -114,6 +114,11 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .calc1rm{font:800 2rem var(--display);text-align:center;margin:8px 0 2px}
 .mtab td.cell{cursor:pointer;font:700 1.1rem var(--display);text-align:center}
 .mtab td.cell.empty{color:var(--muted);font:400 .9rem var(--body)}
+.coachmsg{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:4px;padding:10px 12px;margin:0 0 10px;font-size:.98rem;line-height:1.45;white-space:pre-wrap}
+.coachmsg .cl{display:block;font:700 .75rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--red);margin-bottom:2px}
+.coachmsg a{color:var(--red)}
+.coachmsg.phasemsg{border-left-color:var(--ink)}
+.coachmsg.phasemsg .cl{color:var(--muted)}
 /* progress */
 .lift{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:8px}
 .lift>button{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;width:100%;border:0;background:transparent;padding:10px 12px;text-align:left}
@@ -903,7 +908,11 @@ function viewLibrary() {
 
 function viewSession() {
   const s = S.session; if (!s) return '';
+  const wo = S.lib.find(x => x.id === s.workoutId), focus = (wo && wo.focus) || s.focus || '';
+  const pi = progInfo(), ph = pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.phase : null;
   let html = `<div class="sess-head"><h2>${esc(s.name)}</h2></div>`;
+  if (focus) html += `<div class="coachmsg"><span class="cl">From your coach</span>${linkify(focus)}</div>`;
+  if (ph && (ph.name || ph.note)) html += `<div class="coachmsg phasemsg"><span class="cl">Week ${pi.wk} · ${esc(ph.name || '')}${ph.rpe ? ' · RPE ' + esc(ph.rpe) : ''}</span>${esc(ph.note || '')}</div>`;
   s.exercises.forEach((ex, ei) => {
     if (ex.section) html += `<div class="sec-label">${esc(ex.section)}</div>`;
     const last = lastFor(ex.name);
@@ -1214,7 +1223,7 @@ async function startSession(w) {
     });
     section = '';
   }
-  S.session = { id: newId(), workoutId: w.id, name: w.name, start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
+  S.session = { id: newId(), workoutId: w.id, name: w.name, focus: w.focus || '', start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
   saveDraft(); S.tab = 'session'; render(); window.scrollTo(0, 0);
 }
 const saveDraft = () => S.session ? local.set('wt-draft', S.session) : local.del('wt-draft');
