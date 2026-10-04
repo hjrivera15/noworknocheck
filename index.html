@@ -128,6 +128,10 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .cnex label{display:block;font-weight:600;font-size:.88rem;margin-bottom:3px}
 .cnex input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
 .sheet{max-height:88vh;overflow:auto}
+.mode button{min-width:64px}
+.bkcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:12px}
+.bkcard h3{font:800 1.4rem var(--display);margin:0 0 4px}
+.bkwarn{background:color-mix(in srgb,var(--plate) 18%,transparent);border-left:4px solid var(--plate);padding:8px 12px;border-radius:4px;margin:0 0 12px;font-size:.92rem}
 /* progress */
 .lift{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:8px}
 .lift>button{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;width:100%;border:0;background:transparent;padding:10px 12px;text-align:left}
@@ -179,7 +183,7 @@ tr.done .chk{background:var(--ok);border-color:var(--ok);color:#fff}
 label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
 .inp,textarea.inp{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
 textarea.inp{min-height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;line-height:1.5}
-.mode{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:16px 0 6px}
+.mode{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:16px 0 6px}
 .mode button{flex:1;border:0;background:var(--panel);padding:10px;font:700 1.05rem var(--display);color:var(--muted)}
 .mode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .item{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px;margin-bottom:8px}
@@ -800,8 +804,9 @@ function wkOf(start) {
 function viewCoach() {
   if (!S.canLib) return '';
   if (!S.db) return `<div class="empty"><strong>Coach tools need the published app</strong>Sign in to manage programs and athletes.</div>`;
-  return `<div class="mode" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Info</button></div>` +
-    (S.csub === 'maxes' ? viewTeamMaxes() : S.csub === 'info' ? viewInfoList() : S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : S.openAth ? viewAthleteDetail(S.openAth) : viewAthletes());
+  return `<div class="mode" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Info</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
+    (backupDue() && S.csub !== 'backup' ? `<div class="bkwarn">${lastBackup() ? 'Last backup was ' + shortDate(lastBackup()) + '.' : 'No backup yet.'} <button class="link" data-act="csub" data-m="backup">Back up now</button></div>` : '') +
+    (S.csub === 'backup' ? viewBackup() : S.csub === 'maxes' ? viewTeamMaxes() : S.csub === 'info' ? viewInfoList() : S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : S.openAth ? viewAthleteDetail(S.openAth) : viewAthletes());
 }
 function athWeek(uid) {
   const a = S.assign[uid], pr = a && S.programs.find(p => p.id === a.programId);
@@ -1082,6 +1087,60 @@ function viewTeamMaxes() {
   ${ppl.map(r => { const mx = (S.athData[r.id] || {}).maxes || {}; const nm = (S.ppl[r.id] || {}).name || (S.assign[r.id] || {}).label || 'Unnamed';
     return `<tr><td>${esc(nm)}</td>${lifts.map(l => { const m = mx[exKey(l)]; return `<td class="cell ${m ? '' : 'empty'}" data-act="setmax" data-u="${r.id}" data-n="${esc(l)}">${m ? num(m.oneRM) : '+'}</td>`; }).join('')}</tr>`; }).join('')}
   </tbody></table></div>`;
+}
+
+/* ---------- backup + restore ---------- */
+const lastBackup = () => +(local.get('nwnc-lastbackup', 0) || 0);
+const backupDue = () => S.lib.length > 0 && Date.now() - lastBackup() > 30 * 864e5;
+function viewBackup() {
+  const lb = lastBackup();
+  return `<div class="bkcard"><h3>Download backup</h3>
+    <p class="note" style="margin:0 0 10px">Saves everything in one file: workouts, programs, exercise notes, assignments, and every athlete's logs, check-offs, maxes, body measurements and personal notes.</p>
+    <p class="note" style="margin:0 0 12px">${lb ? 'Last backup: <b>' + fmtDate(lb) + '</b>' : 'No backup yet.'} Do this about once a month, then save the file to Google Drive or email it to yourself.</p>
+    <button class="btn go" data-act="backup" id="bkbtn">Download backup</button></div>
+  <div class="bkcard"><h3>Restore from backup</h3>
+    <p class="note" style="margin:0 0 12px">Puts back everything in a backup file. Anything in the file replaces the current version, and things added since the backup are kept.</p>
+    <label class="btn ghost" style="display:inline-block;cursor:pointer">Choose backup file<input type="file" id="bkfile" accept=".json,application/json" hidden></label></div>`;
+}
+async function getAll(path) { const s = await FS.collection(path).get(); return s.docs.map(d => ({ _id: d.id, ...d.data() })); }
+async function doBackup() {
+  const btn = $('#bkbtn'); if (btn) { btn.disabled = true; btn.textContent = 'Gathering…'; }
+  try {
+    const [library, programs, exinfo, assign, roster] = await Promise.all(['library', 'programs', 'exinfo', 'assign', 'roster'].map(getAll));
+    const users = {};
+    for (const r of roster) users[r._id] = await getAll('users/' + r._id + '/data');
+    const data = { app: 'No Work No Check', version: 1, exportedAt: new Date().toISOString(), exportedBy: (AUTH.currentUser || {}).email || '', library, programs, exinfo, assign, roster, users };
+    const nLogs = Object.values(users).reduce((t, a) => t + a.filter(x => !x.kind).length, 0);
+    const name = `NoWorkNoCheck-backup-${isoDate(new Date())}.json`;
+    const file = new File([JSON.stringify(data)], name, { type: 'application/json' });
+    let shared = false;
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: name }); shared = true; } catch (e) { if (e && e.name === 'AbortError') { toast('Backup not saved.'); return; } } }
+    if (!shared) { const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+    local.set('nwnc-lastbackup', Date.now());
+    toast(`Backup saved: ${library.length} workouts, ${programs.length} programs, ${roster.length} athletes, ${nLogs} sessions.`);
+    render();
+  } catch (e) { console.warn(e); toast('Backup failed. Check your connection and try again.'); }
+  finally { const b = $('#bkbtn'); if (b) { b.disabled = false; b.textContent = 'Download backup'; } }
+}
+async function doRestore(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); } catch (e) { toast('That file isn\'t a No Work No Check backup.'); return; }
+  if (!data || data.app !== 'No Work No Check') { toast('That file isn\'t a No Work No Check backup.'); return; }
+  const users = data.users || {}, nUserDocs = Object.values(users).reduce((t, a) => t + a.length, 0);
+  const ok = await ask(`Restore the backup from ${data.exportedAt ? fmtDate(Date.parse(data.exportedAt)) : 'this file'}? ${(data.library || []).length} workouts, ${(data.programs || []).length} programs, ${Object.keys(users).length} athletes' data (${nUserDocs} items).`, 'Restore');
+  if (!ok) return;
+  const ops = [];
+  const add = (path, arr) => (arr || []).forEach(d => { const { _id, ...rest } = d; if (_id) ops.push([path, _id, rest]); });
+  add('library', data.library); add('programs', data.programs); add('exinfo', data.exinfo); add('assign', data.assign);
+  Object.entries(users).forEach(([uid, arr]) => add('users/' + uid + '/data', arr));
+  try {
+    for (let i = 0; i < ops.length; i += 400) {
+      const b = FS.batch();
+      ops.slice(i, i + 400).forEach(([path, id, v]) => b.set(FS.collection(path).doc(id), v));
+      await b.commit();
+    }
+    toast(`Restored ${ops.length} items.`);
+  } catch (e) { toast(e && e.code === 'permission-denied' ? 'Restore blocked: publish the latest Firebase rules first.' : 'Restore failed partway. Check your connection and try again.'); }
 }
 
 /* ---------- personal coach notes ---------- */
@@ -1438,6 +1497,7 @@ document.addEventListener('click', async ev => {
     case 'info': openInfo(t.dataset.n); break;
     case 'setmax': openMax(t.dataset.u, t.dataset.n); break;
     case 'cnote': openCNote(t.dataset.u, t.dataset.w); break;
+    case 'backup': doBackup(); break;
     case 'saveheight': {
       const ft = num(S.bdraft.ft), inch = num(S.bdraft.inch), total = ft * 12 + inch;
       if (total < 36 || total > 96) { toast('Enter height in feet and inches, e.g. 5 and 10.'); break; }
@@ -1490,6 +1550,7 @@ document.addEventListener('change', ev => {
   if (t.dataset.ap) { (S.adraft[t.dataset.ap] ||= {}).programId = t.value; return; }
   if (t.dataset.pv !== undefined) { S.previewProg = t.value; render(); return; }
   if (t.id === 'mkprog') { S.mkProg = t.checked; return; }
+  if (t.id === 'bkfile' && t.files && t.files[0]) { const f = t.files[0]; t.value = ''; doRestore(f); return; }
   const tog = (arr, v, on) => { const i = arr.indexOf(v); if (on && i < 0) arr.push(v); if (!on && i >= 0) arr.splice(i, 1); };
   if (t.dataset.cm !== undefined) tog(S.pedit.main, t.dataset.cm, t.checked);
   if (t.dataset.cw !== undefined) tog(S.pedit.presetWorkouts, t.dataset.cw, t.checked);
