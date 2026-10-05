@@ -664,7 +664,7 @@ function doneFor(days, i, ws, logs, checks) {
   const a = ws.getTime(), b = a + 7 * 864e5;
   return logs.some(l => l.workoutId === wid && l.date >= a && l.date < b);
 }
-const dayDone = (i, ws = weekStart()) => doneFor(S.sched.days, i, ws, S.logs, S.checks);
+const dayDone = (i, ws = weekStart()) => doneFor(schedDaysAt(ws), i, ws, S.logs, S.checks);
 function loggedOn(days, i, ws, logs) {
   const wid = days[i], a = ws.getTime(), b = a + 7 * 864e5;
   const l = logs.filter(l => l.workoutId === wid && l.date >= a && l.date < b).sort((x, y) => y.date - x.date)[0];
@@ -681,7 +681,7 @@ function progInfo(ws = weekStart()) {
 function weekDetail(wn, ws, pi) {
   const ph = (pi.p.phases || []).find(x => wn >= x.from && wn <= x.to) || null;
   let out = ph ? `<div class="phn">${esc(ph.name)} · RPE ${esc(ph.rpe || ph.preset || '—')}${ph.note ? ` — <span style="font:400 .88rem var(--body);color:var(--muted)">${esc(ph.note)}</span>` : ''}</div>` : '';
-  S.sched.days.forEach((id, i) => {
+  schedDaysAt(ws).forEach((id, i) => {
     const w = id && S.lib.find(x => x.id === id); if (!w) return;
     const dt = new Date(ws); dt.setDate(ws.getDate() + i);
     let sec = '';
@@ -780,18 +780,20 @@ function viewProgramInner() {
   if (phases.length) html += `<div class="pcards">${phases.map((ph, k) => `<div class="pcard ${k === cur ? 'cur' : ''}">
       <div class="pw">Weeks ${ph.from}–${ph.to}${k === cur ? '<span class="now">Now</span>' : ''}</div><div class="pn">${esc(ph.name)}</div>
       <div class="pr2">Main lifts ${ph.main && ph.main.sets ? esc(ph.main.sets) + '×' : ''}${esc(ph.main ? ph.main.reps : '')} · RPE ${esc(ph.rpe || ph.preset || '—')}</div>
-      <div class="pnote">${esc(ph.note || '')}</div></div>`).join('')}</div>`;
-  html += `<h2 class="h">Weekly schedule</h2><div class="pr"><div class="s7">${S.sched.days.map((id, i) => { const w = id && S.lib.find(x => x.id === id); return `<div class="${w ? '' : 'off'}"><b>${DAYS[i].slice(0, 3)}</b>${w ? esc(w.name) : '💤 Rest'}</div>`; }).join('')}</div></div>`;
+      <div class="pnote">${esc(ph.note || '')}</div>${ph.days && ph.days.some(Boolean) ? '<div class="pr2">🔄 New workouts</div>' : ''}</div>`).join('')}</div>`;
+  const swaps = phases.some(ph => ph.days && ph.days.some(Boolean));
+  html += `<h2 class="h">Weekly schedule</h2>${swaps ? `<p class="note">Workouts change by phase. Showing ${cur >= 0 ? 'the ' + esc(phases[cur].name) + ' workouts' : 'the starting workouts'}.</p>` : ''}<div class="pr"><div class="s7">${S.sched.days.map((id, i) => { const w = id && S.lib.find(x => x.id === id); return `<div class="${w ? '' : 'off'}"><b>${DAYS[i].slice(0, 3)}</b>${w ? esc(w.name) : '💤 Rest'}</div>`; }).join('')}</div></div>`;
   for (const { i, w } of days) {
-    const cols = phases.length ? phases : [null];
+    const vis = phases.filter(ph => phDays(p, ph).every((x, j) => (x || null) === (S.sched.days[j] || null)));
+    const cols = vis.length ? vis : [null], curPh = cur >= 0 ? phases[cur] : null;
     html += `<div class="pday"><div class="d">${DAYS[i]}</div><h3>${esc(w.name)}</h3>${w.focus ? `<div class="f">${esc(w.focus)}</div>` : ''}</div>
-    <div class="pr"><table class="ptab"><thead><tr><th>Exercise</th>${phases.length ? phases.map((ph, k) => `<th class="${k === cur ? 'cur' : ''}">Wk ${ph.from}–${ph.to}</th>`).join('') : '<th>Prescription</th>'}</tr></thead><tbody>`;
+    <div class="pr"><table class="ptab"><thead><tr><th>Exercise</th>${vis.length ? vis.map(ph => `<th class="${ph === curPh ? 'cur' : ''}">Wk ${ph.from}–${ph.to}</th>`).join('') : '<th>Prescription</th>'}</tr></thead><tbody>`;
     let sec = '';
     for (const it of w.items) {
       if (it.type === 'section') { sec = it.label; html += `<tr class="psec"><td colspan="${cols.length + 1}">${esc(it.label)}</td></tr>`; continue; }
       const rx = cols.map(ph => phaseRx(w.id, it, sec, ph, p || {}));
       const same = rx.every(x => x === rx[0]);
-      html += `<tr><td>${esc(it.name)}${infoBtn(it.name)}${it.notes ? `<div style="font-weight:400;color:var(--muted);font-size:.82rem">${esc(it.notes)}</div>` : ''}</td>${same && cols.length > 1 ? `<td colspan="${cols.length}" class="same">${esc(rx[0])} · every week</td>` : rx.map((x, k) => `<td class="${k === cur ? 'cur' : ''}">${esc(x)}</td>`).join('')}</tr>`;
+      html += `<tr><td>${esc(it.name)}${infoBtn(it.name)}${it.notes ? `<div style="font-weight:400;color:var(--muted);font-size:.82rem">${esc(it.notes)}</div>` : ''}</td>${same && cols.length > 1 ? `<td colspan="${cols.length}" class="same">${esc(rx[0])} · every week</td>` : rx.map((x, k) => `<td class="${cols[k] && cols[k] === curPh ? 'cur' : ''}">${esc(x)}</td>`).join('')}</tr>`;
     }
     html += `</tbody></table></div><div class="row" style="margin-top:8px"><button class="btn go small" data-act="start" data-id="${w.id}">Start</button></div>`;
   }
@@ -800,7 +802,16 @@ function viewProgramInner() {
 
 const PAD7 = d => (d || []).concat(Array(7).fill(null)).slice(0, 7);
 const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-function schedFor(pr, start) { return { days: PAD7(pr.days), program: { ...pr, start: start || '' } }; }
+/* Phase workouts: a phase can swap in its own weekly workouts (ph.days). All-rest = use the base schedule. */
+const phDays = (p, ph) => ph && Array.isArray(ph.days) && ph.days.some(Boolean) ? PAD7(ph.days) : PAD7(p && p.days);
+function daysAt(p, wk) { return phDays(p, ((p && p.phases) || []).find(ph => wk >= +ph.from && wk <= +ph.to) || null); }
+function allProgDays(p) { return [...new Set([...PAD7(p && p.days), ...((p && p.phases) || []).flatMap(ph => PAD7(ph.days))].filter(Boolean))]; }
+function schedDaysAt(ws) {
+  const p = S.sched.program; if (!p || !p.start) return S.sched.days;
+  const [y, m, d] = p.start.split('-').map(Number);
+  return daysAt(p, Math.round((ws - weekStart(new Date(y, m - 1, d).getTime())) / (7 * 864e5)) + 1);
+}
+function schedFor(pr, start) { return { days: start ? daysAt(pr, wkOf(start) || 0) : PAD7(pr.days), program: { ...pr, start: start || '' } }; }
 function applyMine() {
   if (!S.db) return;
   const a = S.uid && S.assign[S.uid];
@@ -824,7 +835,7 @@ function athWeek(uid) {
   const a = S.assign[uid], pr = a && S.programs.find(p => p.id === a.programId);
   if (!pr) return null;
   const d = S.athData[uid] || { logs: [], checks: {}, loaded: false };
-  const days = PAD7(pr.days), ws = weekStart(), today = (new Date().getDay() + 6) % 7;
+  const days = daysAt(pr, wkOf(a.start) || 0), ws = weekStart(), today = (new Date().getDay() + 6) % 7;
   const idx = days.map((w, i) => w ? i : -1).filter(i => i >= 0);
   const done = idx.map(i => doneFor(days, i, ws, d.logs, d.checks));
   const wk = wkOf(a.start), active = wk >= 1 && wk <= (pr.weeks || 6);
@@ -894,14 +905,14 @@ function viewProgList() {
       <div class="row" style="margin-top:10px"><button class="btn ghost small" data-act="editprog" data-id="${p.id}">Edit</button><button class="btn ghost small" data-act="dupprog" data-id="${p.id}">Duplicate</button><button class="btn ghost small" data-act="viewprog" data-id="${p.id}">View</button></div></article>`;
   }).join('') : `<div class="empty"><strong>No programs yet</strong>Paste a program in the Add tab, or load your Catcher Off-Season program to start.<div style="margin-top:14px"><button class="btn go" data-act="seed">Load Catcher Off-Season</button></div></div>`);
 }
-const flatPhase = ph => ({ from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', mpct: (ph.main || {}).pct || '', note: ph.note || '', ex: (ph.ex || []).map(o => ({ wid: o.wid || '', name: o.name || '', sets: o.sets || '', reps: o.reps || '', load: o.load || '', notes: o.notes || '' })) });
+const flatPhase = ph => ({ days: PAD7(ph.days), from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', mpct: (ph.main || {}).pct || '', note: ph.note || '', ex: (ph.ex || []).map(o => ({ wid: o.wid || '', name: o.name || '', sets: o.sets || '', reps: o.reps || '', load: o.load || '', notes: o.notes || '' })) });
 function progEditFrom(pr, copy) {
   return { id: copy ? null : pr.id, name: copy ? pr.name + ' (copy)' : pr.name, weeks: pr.weeks || 6, days: PAD7(pr.days),
     phases: (pr.phases || []).map(flatPhase), main: [...(pr.main || [])], presetWorkouts: [...(pr.presetWorkouts || [])], skipSections: [...(pr.skipSections || [])] };
 }
 function viewProgEdit() {
   const e = S.pedit;
-  const wos = [...new Set(e.days.filter(Boolean))].map(id => S.lib.find(w => w.id === id)).filter(Boolean);
+  const wos = [...new Set([...e.days, ...e.phases.flatMap(ph => ph.days || [])].filter(Boolean))].map(id => S.lib.find(w => w.id === id)).filter(Boolean);
   const names = [...new Set(wos.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)))];
   const secs = [...new Set(wos.flatMap(w => w.items.filter(i => i.type === 'section').map(i => i.label)))];
   const exOpts = wos.flatMap(w => [...new Set(w.items.filter(i => i.type === 'ex').map(i => i.name))].map(n => [w.id + '|' + n, `${w.name} — ${n}`]));
@@ -915,6 +926,8 @@ function viewProgEdit() {
     ${[['from', 'From week'], ['to', 'To week'], ['name', 'Phase name'], ['rpe', 'RPE target'], ['preset', 'RPE preset'], ['msets', 'Main sets'], ['mreps', 'Main reps'], ['mpct', 'Main % of max']].map(([f, l]) => `<div><label>${l}<input data-ph="${k}" data-pf="${f}" value="${esc(ph[f])}"></label></div>`).join('')}
     </div>
     <input class="inp" style="margin-top:6px" data-ph="${k}" data-pf="note" value="${esc(ph.note)}" placeholder="Coaching note for this phase" aria-label="Phase note">
+    <div class="pxh">Workouts this phase</div><p class="note" style="margin:0 0 6px">Leave every day on Rest to use the weekly schedule above. Pick workouts to swap in new ones for just these weeks.</p>
+    ${PAD7(ph.days).map((id, i) => `<div class="pd"><b>${DAYS[i]}</b><select data-phd="${k}" data-pdi="${i}" aria-label="${DAYS[i]} workout, phase ${k + 1}"><option value="">💤 Rest</option>${S.lib.map(w => `<option value="${w.id}" ${id === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}</select></div>`).join('')}
     <div class="pxh">Exercise targets this phase</div>
     ${(ph.ex || []).map((o, j) => `<div class="pxr">
       <select data-pxk="${k}" data-pxi="${j}" data-pxf="pick" aria-label="Exercise"><option value="">Pick exercise…</option>${exOpts.map(([v, l]) => `<option value="${esc(v)}" ${v === (o.wid || '') + '|' + o.name ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
@@ -1048,7 +1061,7 @@ function estFromLogs(logs, name) {
 }
 function maxLifts(prog, maxes) {
   const names = new Set((prog && prog.main) || []);
-  if (prog) PAD7(prog.days).filter(Boolean).forEach(id => { const w = S.lib.find(x => x.id === id); if (w) w.items.forEach(it => { if (it.type === 'ex' && parsePct(it.load)) names.add(it.name); }); });
+  if (prog) allProgDays(prog).forEach(id => { const w = S.lib.find(x => x.id === id); if (w) w.items.forEach(it => { if (it.type === 'ex' && parsePct(it.load)) names.add(it.name); }); });
   Object.values(maxes || {}).forEach(m => names.add(m.name));
   return [...names];
 }
@@ -1484,7 +1497,7 @@ document.addEventListener('click', async ev => {
     case 'rmpx': S.pedit.phases[+t.dataset.k].ex.splice(+t.dataset.j, 1); render(); break;
     case 'dupphase': {
       const k = +t.dataset.k, src = S.pedit.phases[k], len = Math.max(1, (+src.to || 0) - (+src.from || 0) + 1), f = (+src.to || 0) + 1;
-      S.pedit.phases.splice(k + 1, 0, { ...src, from: String(f), to: String(f + len - 1), ex: (src.ex || []).map(o => ({ ...o })) }); render(); break;
+      S.pedit.phases.splice(k + 1, 0, { ...src, from: String(f), to: String(f + len - 1), ex: (src.ex || []).map(o => ({ ...o })), days: PAD7(src.days) }); render(); break;
     }
     case 'delprog': {
       const n = Object.values(S.assign).filter(a => a.programId === S.pedit.id).length;
@@ -1497,7 +1510,8 @@ document.addEventListener('click', async ev => {
       const weeks = Math.max(1, Math.min(52, parseInt(e.weeks) || 6));
       const days = e.days.map(x => x || null);
       if (!days.some(Boolean)) { toast('Put at least one workout on the schedule.'); break; }
-      const wos = days.filter(Boolean).map(id => S.lib.find(w => w.id === id)).filter(Boolean);
+      const allIds = [...new Set([...days, ...e.phases.flatMap(ph => ph.days || [])].filter(Boolean))];
+      const wos = allIds.map(id => S.lib.find(w => w.id === id)).filter(Boolean);
       const names = new Set(wos.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)));
       const phases = e.phases.filter(ph => parseInt(ph.from) && parseInt(ph.to)).map(ph => {
         const o = { from: parseInt(ph.from), to: parseInt(ph.to), name: String(ph.name || '').trim() || `Weeks ${ph.from}–${ph.to}`, rpe: String(ph.rpe || '').trim() || String(ph.preset || '').trim(), preset: String(ph.preset || '').trim(), note: String(ph.note || '').trim() };
@@ -1505,10 +1519,11 @@ document.addEventListener('click', async ev => {
         if (main.sets || main.reps || main.pct) o.main = main;
         const ex = (ph.ex || []).filter(x => x.name && names.has(x.name)).map(x => { const r = { name: x.name }; if (x.wid) r.wid = x.wid; ['sets', 'reps', 'load', 'notes'].forEach(f => { const v = String(x[f] || '').trim(); if (v) r[f] = v; }); return r; }).filter(x => x.sets || x.reps || x.load || x.notes);
         if (ex.length) o.ex = ex;
+        if (Array.isArray(ph.days) && ph.days.some(Boolean)) o.days = PAD7(ph.days).map(x => x || null);
         return o;
       }).sort((a, b) => a.from - b.from);
       const pr = { id: e.id || 'p' + newId(), name: e.name.trim(), weeks, days, phases,
-        main: e.main.filter(n => names.has(n)), presetWorkouts: e.presetWorkouts.filter(id => days.includes(id)),
+        main: e.main.filter(n => names.has(n)), presetWorkouts: e.presetWorkouts.filter(id => allIds.includes(id)),
         skipSections: e.skipSections, updated: Date.now() };
       if (await store.saveProgram(pr)) { S.pedit = null; render(); toast('Program saved.'); }
       break;
@@ -1580,6 +1595,7 @@ document.addEventListener('input', ev => {
 document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.dataset.pd !== undefined) { S.pedit.days[+t.dataset.pd] = t.value || null; render(); return; }
+  if (t.dataset.phd !== undefined) { const ph = S.pedit.phases[+t.dataset.phd]; ph.days = PAD7(ph.days); ph.days[+t.dataset.pdi] = t.value || null; render(); return; }
   if (t.dataset.pxk !== undefined) { setPx(t); return; }
   if (t.dataset.ap) { (S.adraft[t.dataset.ap] ||= {}).programId = t.value; return; }
   if (t.dataset.pv !== undefined) { S.previewProg = t.value; render(); return; }
