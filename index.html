@@ -291,6 +291,9 @@ table.ptab tr.psec td{font:700 .95rem var(--display);color:var(--red);background
 .phg label{font-size:.75rem;color:var(--muted)}
 .phg input{width:100%;padding:8px 6px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
 @media (max-width:480px){.phg{grid-template-columns:repeat(2,1fr)}}
+.pxh{font:700 .8rem var(--body);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:12px 0 6px}
+.pxr{border:1px solid var(--line);border-radius:4px;padding:8px;margin-bottom:6px;background:var(--bg)}
+.pxr select{width:100%;padding:8px 6px;margin-bottom:6px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
 .chks{display:flex;flex-wrap:wrap;gap:6px}
 .chks label{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:.9rem;cursor:pointer}
 .chks input{width:18px;height:18px;accent-color:var(--red)}
@@ -740,9 +743,18 @@ function viewWeek() {
   return html;
 }
 
+/* Phase targets: main-lift scheme first, then per-exercise week targets (most specific wins). */
+function applyPhase(it, wid, ph, p) {
+  const r = { ...it }; if (!ph) return r;
+  const nm = String(it.name || '').toLowerCase();
+  if (ph.main && p && (p.main || []).some(m => m.toLowerCase() === nm)) { if (ph.main.sets) r.sets = ph.main.sets; if (ph.main.reps) r.reps = ph.main.reps; if (ph.main.pct) r.load = String(ph.main.pct).replace(/%?$/, '%'); }
+  const hits = (ph.ex || []).filter(o => o && String(o.name || '').toLowerCase() === nm && (!o.wid || o.wid === wid));
+  const o = hits.find(x => x.wid) || hits[0];
+  if (o) { if (o.sets) r.sets = o.sets; if (o.reps) r.reps = o.reps; if (o.load) r.load = String(o.load); if (o.notes) r.notes = o.notes; }
+  return r;
+}
 function phaseRx(wid, it, sec, ph, p) {
-  const r = { ...it };
-  if (ph && ph.main && (p.main || []).some(m => m.toLowerCase() === it.name.toLowerCase())) { if (ph.main.sets) r.sets = ph.main.sets; if (ph.main.reps) r.reps = ph.main.reps; if (ph.main.pct) r.load = String(ph.main.pct).replace(/%?$/, '%'); }
+  const r = applyPhase(it, wid, ph, p);
   const rpe = ph && (p.presetWorkouts || []).includes(wid) && !(p.skipSections || []).includes(sec) ? (ph.rpe || ph.preset) : '';
   const pl = !S.previewProg && pctLoad(r.load, it.name, S.maxes);
   return `${r.sets || 1} × ${r.reps || '—'}${r.load ? ' @ ' + r.load : ''}${pl && pl.text ? ' (' + pl.text + ')' : ''}${rpe ? ' · RPE ' + rpe : ''}`;
@@ -882,7 +894,7 @@ function viewProgList() {
       <div class="row" style="margin-top:10px"><button class="btn ghost small" data-act="editprog" data-id="${p.id}">Edit</button><button class="btn ghost small" data-act="dupprog" data-id="${p.id}">Duplicate</button><button class="btn ghost small" data-act="viewprog" data-id="${p.id}">View</button></div></article>`;
   }).join('') : `<div class="empty"><strong>No programs yet</strong>Paste a program in the Add tab, or load your Catcher Off-Season program to start.<div style="margin-top:14px"><button class="btn go" data-act="seed">Load Catcher Off-Season</button></div></div>`);
 }
-const flatPhase = ph => ({ from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', mpct: (ph.main || {}).pct || '', note: ph.note || '' });
+const flatPhase = ph => ({ from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', mpct: (ph.main || {}).pct || '', note: ph.note || '', ex: (ph.ex || []).map(o => ({ wid: o.wid || '', name: o.name || '', sets: o.sets || '', reps: o.reps || '', load: o.load || '', notes: o.notes || '' })) });
 function progEditFrom(pr, copy) {
   return { id: copy ? null : pr.id, name: copy ? pr.name + ' (copy)' : pr.name, weeks: pr.weeks || 6, days: PAD7(pr.days),
     phases: (pr.phases || []).map(flatPhase), main: [...(pr.main || [])], presetWorkouts: [...(pr.presetWorkouts || [])], skipSections: [...(pr.skipSections || [])] };
@@ -892,16 +904,24 @@ function viewProgEdit() {
   const wos = [...new Set(e.days.filter(Boolean))].map(id => S.lib.find(w => w.id === id)).filter(Boolean);
   const names = [...new Set(wos.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)))];
   const secs = [...new Set(wos.flatMap(w => w.items.filter(i => i.type === 'section').map(i => i.label)))];
+  const exOpts = wos.flatMap(w => [...new Set(w.items.filter(i => i.type === 'ex').map(i => i.name))].map(n => [w.id + '|' + n, `${w.name} — ${n}`]));
   const chk = (attr, val, on) => `<label><input type="checkbox" ${attr}="${esc(val)}" ${on ? 'checked' : ''}>`;
   let html = `<label class="f" for="pname">Program name</label><input class="inp" id="pname" data-pe="name" value="${esc(e.name)}" placeholder="e.g. Firefighter PAT Prep">
   <label class="f" for="pweeks">Length (weeks)</label><input class="inp" id="pweeks" style="max-width:120px" type="number" min="1" max="52" data-pe="weeks" value="${esc(e.weeks)}">
   <h2 class="h">Weekly schedule</h2><p class="note">Workouts come from the Workouts library. Add new ones in the Add tab first.</p>
   ${e.days.map((id, i) => `<div class="pd"><b>${DAYS[i]}</b><select data-pd="${i}" aria-label="${DAYS[i]} workout"><option value="">💤 Rest</option>${S.lib.map(w => `<option value="${w.id}" ${id === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}</select></div>`).join('')}
-  <h2 class="h">Phases</h2><p class="note">Each phase sets the main-lift sets × reps, % of max (optional) and the RPE for a range of weeks. No phases = workouts run exactly as written every week.</p>
+  <h2 class="h">Phases</h2><p class="note">Each phase sets the main-lift sets × reps, % of max (optional) and the RPE for a range of weeks. Exercise targets change any single exercise — sets, reps, distance, time, load or note — for just those weeks. No phases = workouts run exactly as written every week.</p>
   ${e.phases.map((ph, k) => `<div class="item section"><div class="phg">
     ${[['from', 'From week'], ['to', 'To week'], ['name', 'Phase name'], ['rpe', 'RPE target'], ['preset', 'RPE preset'], ['msets', 'Main sets'], ['mreps', 'Main reps'], ['mpct', 'Main % of max']].map(([f, l]) => `<div><label>${l}<input data-ph="${k}" data-pf="${f}" value="${esc(ph[f])}"></label></div>`).join('')}
-    </div><div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn ghost small" data-act="rmphase" data-k="${k}">Remove phase</button></div>
-    <input class="inp" style="margin-top:6px" data-ph="${k}" data-pf="note" value="${esc(ph.note)}" placeholder="Coaching note for this phase" aria-label="Phase note"></div>`).join('')}
+    </div>
+    <input class="inp" style="margin-top:6px" data-ph="${k}" data-pf="note" value="${esc(ph.note)}" placeholder="Coaching note for this phase" aria-label="Phase note">
+    <div class="pxh">Exercise targets this phase</div>
+    ${(ph.ex || []).map((o, j) => `<div class="pxr">
+      <select data-pxk="${k}" data-pxi="${j}" data-pxf="pick" aria-label="Exercise"><option value="">Pick exercise…</option>${exOpts.map(([v, l]) => `<option value="${esc(v)}" ${v === (o.wid || '') + '|' + o.name ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      <div class="phg">${[['sets', 'Sets'], ['reps', 'Reps / distance / time'], ['load', 'Load or %'], ['notes', 'Note']].map(([f, l]) => `<div><label>${l}<input data-pxk="${k}" data-pxi="${j}" data-pxf="${f}" value="${esc(o[f])}"></label></div>`).join('')}</div>
+      <div style="display:flex;justify-content:flex-end"><button class="link" data-act="rmpx" data-k="${k}" data-j="${j}">Remove</button></div></div>`).join('')}
+    <div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost small" data-act="addpx" data-k="${k}" ${exOpts.length ? '' : 'disabled'}>Add exercise target</button>
+    <span style="display:flex;gap:6px"><button class="btn ghost small" data-act="dupphase" data-k="${k}">Copy to next week</button><button class="btn ghost small" data-act="rmphase" data-k="${k}">Remove phase</button></span></div></div>`).join('')}
   <button class="btn ghost small" data-act="addphase">Add phase</button>`;
   if (names.length) html += `<h2 class="h">Main lifts</h2><p class="note">These take each phase's main sets × reps. Everything else runs as written.</p>
     <div class="chks">${names.map(n => chk('data-cm', n, e.main.includes(n)) + esc(n) + '</label>').join('')}</div>`;
@@ -1314,8 +1334,7 @@ async function startSession(w) {
   const presetOK = ph && (p.presetWorkouts || []).includes(w.id);
   for (const orig of w.items) {
     if (orig.type === 'section') { section = sec = orig.label; continue; }
-    const it = { ...orig };
-    if (ph && ph.main && isMain(it.name)) { if (ph.main.sets) it.sets = ph.main.sets; if (ph.main.reps) it.reps = ph.main.reps; if (ph.main.pct) it.load = String(ph.main.pct).replace(/%?$/, '%'); }
+    const it = applyPhase(orig, w.id, ph, p);
     const pl = pctLoad(it.load, it.name, S.maxes);
     if (pl) it.pctInfo = pl.text ? `${pl.text} (max ${pl.orm})` : 'set your max in Profile';
     const rpePre = presetOK && !(p.skipSections || []).includes(sec) ? (ph.preset || '') : '';
@@ -1459,8 +1478,14 @@ document.addEventListener('click', async ev => {
     case 'dupprog': S.pedit = progEditFrom(S.programs.find(p => p.id === id), true); render(); window.scrollTo(0, 0); break;
     case 'viewprog': S.previewProg = id; S.tab = 'program'; render(); window.scrollTo(0, 0); break;
     case 'cancelprog': S.pedit = null; render(); break;
-    case 'addphase': { const ps = S.pedit.phases, last = ps[ps.length - 1]; const f = last ? (+last.to || 0) + 1 : 1; ps.push({ from: String(f), to: String(f + 1), name: '', rpe: '', preset: '', msets: '', mreps: '', mpct: '', note: '' }); render(); break; }
+    case 'addphase': { const ps = S.pedit.phases, last = ps[ps.length - 1]; const f = last ? (+last.to || 0) + 1 : 1; ps.push({ from: String(f), to: String(f + 1), name: '', rpe: '', preset: '', msets: '', mreps: '', mpct: '', note: '', ex: [] }); render(); break; }
     case 'rmphase': S.pedit.phases.splice(+t.dataset.k, 1); render(); break;
+    case 'addpx': { const ph = S.pedit.phases[+t.dataset.k]; (ph.ex ||= []).push({ wid: '', name: '', sets: '', reps: '', load: '', notes: '' }); render(); break; }
+    case 'rmpx': S.pedit.phases[+t.dataset.k].ex.splice(+t.dataset.j, 1); render(); break;
+    case 'dupphase': {
+      const k = +t.dataset.k, src = S.pedit.phases[k], len = Math.max(1, (+src.to || 0) - (+src.from || 0) + 1), f = (+src.to || 0) + 1;
+      S.pedit.phases.splice(k + 1, 0, { ...src, from: String(f), to: String(f + len - 1), ex: (src.ex || []).map(o => ({ ...o })) }); render(); break;
+    }
     case 'delprog': {
       const n = Object.values(S.assign).filter(a => a.programId === S.pedit.id).length;
       if (await ask(`Delete “${S.pedit.name}”?${n ? ` ${n} athlete${n === 1 ? ' is' : 's are'} on it and will have no program.` : ''}`, 'Delete program')) { await store.deleteProgram(S.pedit.id); S.pedit = null; render(); toast('Program deleted.'); }
@@ -1475,9 +1500,11 @@ document.addEventListener('click', async ev => {
       const wos = days.filter(Boolean).map(id => S.lib.find(w => w.id === id)).filter(Boolean);
       const names = new Set(wos.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)));
       const phases = e.phases.filter(ph => parseInt(ph.from) && parseInt(ph.to)).map(ph => {
-        const o = { from: parseInt(ph.from), to: parseInt(ph.to), name: ph.name.trim() || `Weeks ${ph.from}–${ph.to}`, rpe: ph.rpe.trim() || ph.preset.trim(), preset: ph.preset.trim(), note: ph.note.trim() };
-        const main = {}; if (ph.msets.trim()) main.sets = ph.msets.trim(); if (ph.mreps.trim()) main.reps = ph.mreps.trim(); if (String(ph.mpct || '').trim()) main.pct = String(ph.mpct).trim().replace(/%$/, '');
+        const o = { from: parseInt(ph.from), to: parseInt(ph.to), name: String(ph.name || '').trim() || `Weeks ${ph.from}–${ph.to}`, rpe: String(ph.rpe || '').trim() || String(ph.preset || '').trim(), preset: String(ph.preset || '').trim(), note: String(ph.note || '').trim() };
+        const main = {}; if (String(ph.msets || '').trim()) main.sets = String(ph.msets).trim(); if (String(ph.mreps || '').trim()) main.reps = String(ph.mreps).trim(); if (String(ph.mpct || '').trim()) main.pct = String(ph.mpct).trim().replace(/%$/, '');
         if (main.sets || main.reps || main.pct) o.main = main;
+        const ex = (ph.ex || []).filter(x => x.name && names.has(x.name)).map(x => { const r = { name: x.name }; if (x.wid) r.wid = x.wid; ['sets', 'reps', 'load', 'notes'].forEach(f => { const v = String(x[f] || '').trim(); if (v) r[f] = v; }); return r; }).filter(x => x.sets || x.reps || x.load || x.notes);
+        if (ex.length) o.ex = ex;
         return o;
       }).sort((a, b) => a.from - b.from);
       const pr = { id: e.id || 'p' + newId(), name: e.name.trim(), weeks, days, phases,
@@ -1524,6 +1551,11 @@ document.addEventListener('click', async ev => {
   }
 });
 
+function setPx(t) {
+  const o = S.pedit.phases[+t.dataset.pxk].ex[+t.dataset.pxi];
+  if (t.dataset.pxf === 'pick') { const i = t.value.indexOf('|'); o.wid = i < 0 ? '' : t.value.slice(0, i); o.name = i < 0 ? '' : t.value.slice(i + 1); }
+  else o[t.dataset.pxf] = t.value;
+}
 document.addEventListener('input', ev => {
   const t = ev.target;
   if (t.id === 'search') { S.filter = t.value; const pos = t.selectionStart; render(); const s = $('#search'); s.focus(); s.setSelectionRange(pos, pos); return; }
@@ -1531,6 +1563,7 @@ document.addEventListener('input', ev => {
   if (t.dataset.bd) { S.bdraft[t.dataset.bd] = t.value; return; }
   if (t.dataset.pe) { S.pedit[t.dataset.pe] = t.value; return; }
   if (t.dataset.ph !== undefined) { S.pedit.phases[+t.dataset.ph][t.dataset.pf] = t.value; return; }
+  if (t.dataset.pxk !== undefined) { setPx(t); return; }
   if (t.dataset.al) { (S.adraft[t.dataset.al] ||= {}).label = t.value; return; }
   if (t.dataset.as) { (S.adraft[t.dataset.as] ||= {}).start = t.value; return; }
   if (t.dataset.b) { S.edit[t.dataset.b] = t.value; return; }
@@ -1547,6 +1580,7 @@ document.addEventListener('input', ev => {
 document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.dataset.pd !== undefined) { S.pedit.days[+t.dataset.pd] = t.value || null; render(); return; }
+  if (t.dataset.pxk !== undefined) { setPx(t); return; }
   if (t.dataset.ap) { (S.adraft[t.dataset.ap] ||= {}).programId = t.value; return; }
   if (t.dataset.pv !== undefined) { S.previewProg = t.value; render(); return; }
   if (t.id === 'mkprog') { S.mkProg = t.checked; return; }
