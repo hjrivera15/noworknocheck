@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isCoach() {
+      return signedIn() && request.auth.token.email != null
+        && request.auth.token.email.lower() in ['hjrivera1534@gmail.com'];
+    }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+
+    match /library/{id}  { allow read: if signedIn(); allow write: if isCoach(); }
+    match /programs/{id} { allow read: if signedIn(); allow write: if isCoach(); }
+    match /exinfo/{id}   { allow read: if signedIn(); allow write: if isCoach(); }
+    match /assign/{uid}  { allow read: if isMe(uid) || isCoach(); allow write: if isCoach(); }
+    match /roster/{uid}  { allow read: if isMe(uid) || isCoach(); allow write: if isMe(uid); }
+    match /users/{uid}/data/{doc} { allow read: if isMe(uid) || isCoach(); allow write: if isMe(uid) || isCoach(); }
+  }
+}
