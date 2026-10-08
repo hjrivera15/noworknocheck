@@ -186,6 +186,7 @@ textarea.inp{min-height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;
 .mode{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:16px 0 6px}
 .mode button{flex:1;border:0;background:var(--panel);padding:10px;font:700 1.05rem var(--display);color:var(--muted)}
 .mode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mode.csub button{flex:1 1 25%;padding:10px 4px}
 .item{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px;margin-bottom:8px}
 .item.section{border-left:5px solid var(--red)}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
@@ -645,8 +646,7 @@ function sessionsHtml(logs, canDelete) {
 
 /* ---------- render ---------- */
 function renderTabs() {
-  const tabs = [['week', 'Week'], ['program', 'Program'], ['library', 'Workouts'], ['build', S.edit && S.edit.id && S.lib.some(w => w.id === S.edit.id) ? 'Edit' : 'Add'], ['history', 'History'], ['profile', 'Profile']];
-  if (!S.canLib) tabs.splice(3, 1);
+  const tabs = [['week', 'Week'], ['program', 'Program'], ['history', 'History'], ['profile', 'Profile']];
   if (S.canLib) tabs.push(['coach', 'Coach']);
   if (S.session) tabs.unshift(['session', 'Live']);
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${l}</button>`).join('');
@@ -826,10 +826,12 @@ function wkOf(start) {
 }
 function viewCoach() {
   if (!S.canLib) return '';
-  if (!S.db) return `<div class="empty"><strong>Coach tools need the published app</strong>Sign in to manage programs and athletes.</div>`;
-  return `<div class="mode" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Info</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
+  const lib = S.csub === 'library' || S.csub === 'build';
+  if (!S.db && !lib) return `<div class="empty"><strong>Coach tools need the published app</strong>Sign in to manage programs and athletes.</div>`;
+  const editing = S.edit && S.edit.id && S.lib.some(w => w.id === S.edit.id);
+  return `<div class="mode csub" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="library" aria-pressed="${S.csub === 'library'}">Workouts</button><button data-act="csub" data-m="build" aria-pressed="${S.csub === 'build'}">${editing ? 'Edit' : 'Add'}</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Info</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
     (backupDue() && S.csub !== 'backup' ? `<div class="bkwarn">${lastBackup() ? 'Last backup was ' + shortDate(lastBackup()) + '.' : 'No backup yet.'} <button class="link" data-act="csub" data-m="backup">Back up now</button></div>` : '') +
-    (S.csub === 'backup' ? viewBackup() : S.csub === 'maxes' ? viewTeamMaxes() : S.csub === 'info' ? viewInfoList() : S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : S.openAth ? viewAthleteDetail(S.openAth) : viewAthletes());
+    (S.csub === 'library' ? viewLibrary() : S.csub === 'build' ? viewBuild() : S.csub === 'backup' ? viewBackup() : S.csub === 'maxes' ? viewTeamMaxes() : S.csub === 'info' ? viewInfoList() : S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : S.openAth ? viewAthleteDetail(S.openAth) : viewAthletes());
 }
 function athWeek(uid) {
   const a = S.assign[uid], pr = a && S.programs.find(p => p.id === a.programId);
@@ -903,7 +905,7 @@ function viewProgList() {
     const days = PAD7(p.days).map((id, i) => id ? DAYS[i].slice(0, 3) : null).filter(Boolean).join(' · ');
     return `<article class="wo"><h3>${esc(p.name)}</h3><div class="focus">${p.weeks || '?'} weeks · ${days || 'no days set'} · ${n} athlete${n === 1 ? '' : 's'}${(p.phases || []).length ? ' · ' + p.phases.length + ' phases' : ''}</div>
       <div class="row" style="margin-top:10px"><button class="btn ghost small" data-act="editprog" data-id="${p.id}">Edit</button><button class="btn ghost small" data-act="dupprog" data-id="${p.id}">Duplicate</button><button class="btn ghost small" data-act="viewprog" data-id="${p.id}">View</button></div></article>`;
-  }).join('') : `<div class="empty"><strong>No programs yet</strong>Paste a program in the Add tab, or load your Catcher Off-Season program to start.<div style="margin-top:14px"><button class="btn go" data-act="seed">Load Catcher Off-Season</button></div></div>`);
+  }).join('') : `<div class="empty"><strong>No programs yet</strong>Paste a program in Coach → Add, or load your Catcher Off-Season program to start.<div style="margin-top:14px"><button class="btn go" data-act="seed">Load Catcher Off-Season</button></div></div>`);
 }
 const flatPhase = ph => ({ days: PAD7(ph.days), from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', mpct: (ph.main || {}).pct || '', note: ph.note || '', ex: (ph.ex || []).map(o => ({ wid: o.wid || '', name: o.name || '', sets: o.sets || '', reps: o.reps || '', load: o.load || '', notes: o.notes || '' })) });
 function progEditFrom(pr, copy) {
@@ -993,7 +995,7 @@ function viewSession() {
 }
 
 function viewBuild() {
-  if (!S.canLib) return `<div class="empty"><strong>Coach-only</strong>Workouts are posted by the coach. You can still run and log any workout from the Workouts tab.</div>`;
+  if (!S.canLib) return `<div class="empty"><strong>Coach-only</strong>Workouts are posted by the coach. Start your workouts from the Week or Program tab.</div>`;
   const e = S.edit || (S.edit = { id: null, name: '', focus: '', items: [] });
   const isEdit = e.id && S.lib.some(w => w.id === e.id);
   const res = S.mode === 'paste' ? smartParse(S.pasteText) : null, multi = res && res.workouts.length > 1;
@@ -1320,7 +1322,7 @@ const fmt = s => `${Math.floor(s / 60)}:${String(Math.max(0, s % 60)).padStart(2
 function render() {
   if (S.tab === 'session' && !S.session) S.tab = 'week';
   renderTabs();
-  const v = { profile: viewProfile, coach: viewCoach, week: viewWeek, program: viewProgram, library: viewLibrary, session: viewSession, build: viewBuild, history: viewHistory }[S.tab]();
+  const v = ({ profile: viewProfile, coach: viewCoach, week: viewWeek, program: viewProgram, session: viewSession, history: viewHistory }[S.tab] || viewWeek)();
   $('#main').innerHTML = v;
   renderDock();
 }
@@ -1408,10 +1410,10 @@ document.addEventListener('click', async ev => {
   const a = t.dataset.act, id = t.dataset.id, find = () => S.lib.find(w => w.id === id);
   const ei = +t.dataset.ei, si = +t.dataset.si, i = +t.dataset.i;
   switch (a) {
-    case 'new': S.edit = { id: null, name: '', focus: '', items: [] }; S.pasteText = ''; S.mode = 'paste'; S.tab = 'build'; render(); break;
+    case 'new': S.edit = { id: null, name: '', focus: '', items: [] }; S.pasteText = ''; S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break;
     case 'start': startSession(find()); break;
-    case 'edit': { const w = find(); S.edit = JSON.parse(JSON.stringify(w)); S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'build'; render(); break; }
-    case 'dup': { const w = find(); S.edit = { ...JSON.parse(JSON.stringify(w)), id: null, name: w.name + ' (copy)' }; S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'build'; render(); break; }
+    case 'edit': { const w = find(); S.edit = JSON.parse(JSON.stringify(w)); S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
+    case 'dup': { const w = find(); S.edit = { ...JSON.parse(JSON.stringify(w)), id: null, name: w.name + ' (copy)' }; S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
     case 'tick': {
       const st = S.session.exercises[ei].sets[si]; st.done = !st.done;
       if (st.done) { if (!st.weight && st.phW) st.weight = st.phW; if (!st.reps && st.phR) st.reps = st.phR; if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
@@ -1456,7 +1458,7 @@ document.addEventListener('click', async ev => {
             skipSections: [...new Set(saved.flatMap(w => w.items.filter(it => it.type === 'section' && skipRe.test(it.label)).map(it => it.label)))] };
           S.tab = 'coach'; S.csub = 'programs'; render(); window.scrollTo(0, 0);
           toast(`${saved.length} workouts saved. Check the program, then hit Save program.`);
-        } else { S.tab = 'library'; render(); toast(`${saved.length} workouts saved.`); }
+        } else { S.tab = 'coach'; S.csub = 'library'; render(); toast(`${saved.length} workouts saved.`); }
         break;
       }
       if (res && res.workouts[0]) { if (!e.name.trim() && res.workouts[0].name) e.name = res.workouts[0].name; if (!(e.focus || '').trim() && res.workouts[0].focus) e.focus = res.workouts[0].focus; }
@@ -1465,10 +1467,10 @@ document.addEventListener('click', async ev => {
       if (!e.name.trim()) { toast('Give the workout a name.'); $('#bname').focus(); break; }
       if (!items.some(it => it.type === 'ex')) { toast('Add at least one exercise.'); break; }
       const w = { id: e.id || newId(), name: e.name.trim(), focus: (e.focus || '').trim(), items, created: e.created || Date.now(), updated: Date.now() };
-      if (await store.saveWorkout(w)) { S.edit = null; S.pasteText = ''; S.tab = 'library'; render(); toast('Workout saved.'); }
+      if (await store.saveWorkout(w)) { S.edit = null; S.pasteText = ''; S.tab = 'coach'; S.csub = 'library'; render(); toast('Workout saved.'); }
       break;
     }
-    case 'delwo': if (await ask(`Delete “${S.edit.name}”? Logged sessions stay in History.`, 'Delete workout')) { await store.deleteWorkout(S.edit.id); S.edit = null; S.pasteText = ''; S.tab = 'library'; render(); toast('Workout deleted.'); } break;
+    case 'delwo': if (await ask(`Delete “${S.edit.name}”? Logged sessions stay in History.`, 'Delete workout')) { await store.deleteWorkout(S.edit.id); S.edit = null; S.pasteText = ''; S.tab = 'coach'; S.csub = 'library'; render(); toast('Workout deleted.'); } break;
     case 'daytick': {
       const k = wkKey(); const cur = dayDone(i);
       const doc = S.checks[k] || { kind: 'week', id: k, checked: {} };
