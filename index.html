@@ -321,6 +321,14 @@ h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
 .modal{position:fixed;inset:0;background:rgba(10,14,20,.55);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:0 0 env(safe-area-inset-bottom,0px)}
 .sheet{background:var(--panel);width:100%;max-width:720px;border-radius:10px 10px 0 0;padding:18px 16px 22px}
 .sheet h2{font:800 1.8rem var(--display);margin:0 0 4px}
+.motiv{text-align:center;padding:8px 4px 4px}
+.motiv .mk{font:700 .78rem var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--red)}
+.motiv .mt{font:700 1.55rem/1.25 var(--display);margin:12px 0 8px;white-space:pre-wrap}
+.motiv .mr{font-weight:600;color:var(--muted)}
+.motiv .mw{font:700 1rem var(--display);color:var(--muted);margin-top:14px;text-transform:uppercase;letter-spacing:.03em}
+.motiv .btn{width:100%;margin-top:18px;padding:14px;font-size:1.3rem}
+.mset{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:4px;padding:12px;margin-bottom:16px}
+.mset textarea{width:100%;min-height:110px;padding:10px;border:1px solid var(--line);border-radius:4px;background:var(--field);font:inherit;margin-top:6px}
 .rpe{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:8px 0}
 .rpe button{border:1px solid var(--line);background:var(--field);border-radius:4px;padding:10px 0;font:700 1.15rem var(--display)}
 .rpe button[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
@@ -829,7 +837,7 @@ function viewCoach() {
   const lib = S.csub === 'library' || S.csub === 'build';
   if (!S.db && !lib) return `<div class="empty"><strong>Coach tools need the published app</strong>Sign in to manage programs and athletes.</div>`;
   const editing = S.edit && S.edit.id && S.lib.some(w => w.id === S.edit.id);
-  return `<div class="mode csub" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="library" aria-pressed="${S.csub === 'library'}">Workouts</button><button data-act="csub" data-m="build" aria-pressed="${S.csub === 'build'}">${editing ? 'Edit' : 'Add'}</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Info</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
+  return `<div class="mode csub" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="library" aria-pressed="${S.csub === 'library'}">Workouts</button><button data-act="csub" data-m="build" aria-pressed="${S.csub === 'build'}">${editing ? 'Edit' : 'Add'}</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Messages</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
     (backupDue() && S.csub !== 'backup' ? `<div class="bkwarn">${lastBackup() ? 'Last backup was ' + shortDate(lastBackup()) + '.' : 'No backup yet.'} <button class="link" data-act="csub" data-m="backup">Back up now</button></div>` : '') +
     (S.csub === 'library' ? viewLibrary() : S.csub === 'build' ? viewBuild() : S.csub === 'backup' ? viewBackup() : S.csub === 'maxes' ? viewTeamMaxes() : S.csub === 'info' ? viewInfoList() : S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : S.openAth ? viewAthleteDetail(S.openAth) : viewAthletes());
 }
@@ -1237,11 +1245,101 @@ function openInfo(name) {
     } catch (e) { toast(e && e.code === 'permission-denied' ? 'Not saved: update your Firebase rules (see the new exinfo line).' : 'Notes not saved. Try again.'); }
   };
 }
+/* ---------- start-of-workout message ---------- */
+const VERSES = [
+  ['I can do all things through Christ which strengtheneth me.', 'Philippians 4:13'],
+  ['But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint.', 'Isaiah 40:31'],
+  ['Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest.', 'Joshua 1:9'],
+  ['Know ye not that they which run in a race run all, but one receiveth the prize? So run, that ye may obtain.', '1 Corinthians 9:24'],
+  ['And whatsoever ye do, do it heartily, as to the Lord, and not unto men.', 'Colossians 3:23'],
+  ['And let us not be weary in well doing: for in due season we shall reap, if we faint not.', 'Galatians 6:9'],
+  ['I have fought a good fight, I have finished my course, I have kept the faith.', '2 Timothy 4:7'],
+  ['In all labour there is profit: but the talk of the lips tendeth only to penury.', 'Proverbs 14:23'],
+  ['…let us run with patience the race that is set before us.', 'Hebrews 12:1'],
+  ['It is God that girdeth me with strength, and maketh my way perfect.', 'Psalm 18:32'],
+  ['Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee.', 'Isaiah 41:10'],
+  ['For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind.', '2 Timothy 1:7'],
+  ['Iron sharpeneth iron; so a man sharpeneth the countenance of his friend.', 'Proverbs 27:17'],
+  ['…tribulation worketh patience; and patience, experience; and experience, hope.', 'Romans 5:3–4'],
+  ['…for the joy of the LORD is your strength.', 'Nehemiah 8:10'],
+  ['Be strong and of a good courage, fear not… he will not fail thee, nor forsake thee.', 'Deuteronomy 31:6'],
+  ['The LORD is my strength and my shield; my heart trusted in him, and I am helped.', 'Psalm 28:7'],
+  ['Whatsoever thy hand findeth to do, do it with thy might.', 'Ecclesiastes 9:10'],
+  ['Watch ye, stand fast in the faith, quit you like men, be strong.', '1 Corinthians 16:13'],
+  ['Now no chastening for the present seemeth to be joyous, but grievous: nevertheless afterward it yieldeth the peaceable fruit of righteousness unto them which are exercised thereby.', 'Hebrews 12:11']
+];
+const PUSHES = [
+  'No work, no check. Earn it today.',
+  'Nobody remembers the reps you skipped. Make every one count.',
+  'The weight doesn\'t care how you feel. Show up anyway.',
+  'Discipline is doing it when nobody is watching.',
+  'Strong is built one boring rep at a time.',
+  'Today\'s sweat is next season\'s confidence.',
+  'You don\'t rise to the occasion. You fall to your level of training.',
+  'Clean reps first. Heavy reps follow.',
+  'Your teammates are counting on the work you do today.',
+  'Be the hardest worker in the room. It\'s the one thing you control.',
+  'Comfort doesn\'t build catchers. Work does.',
+  'Get 1% better today. That\'s the whole plan.',
+  'Tired is a feeling. Done is a decision.',
+  'Win the warm-up. Win the first set. Then win the next one.',
+  'Bigger. Faster. Stronger. It starts with this session.',
+  'Small wins every day add up to big wins in the spring.',
+  'Effort is free. Bring all of it.',
+  'The work you put in when it\'s hard is the work that pays.',
+  'Focus on the rep in front of you.',
+  'Champions are made in the off-season.'
+];
+const motivCfg = () => S.exinfo._motivation || { mode: 'both', custom: [] };
+function pickMotivation(w) {
+  const c = motivCfg(), mode = c.mode || 'both';
+  if (mode === 'off') return null;
+  const custom = (c.custom || []).filter(Boolean).map(t => ({ kind: 'coach', text: t }));
+  const verses = VERSES.map(([t, r]) => ({ kind: 'verse', text: t, ref: r }));
+  const pushes = PUSHES.map(t => ({ kind: 'push', text: t }));
+  const pool = mode === 'verse' ? verses : mode === 'push' ? pushes : mode === 'coach' ? custom : verses.concat(pushes);
+  const all = mode === 'coach' ? pool : pool.concat(custom, custom);
+  if (!all.length) return null;
+  let last = ''; try { last = localStorage.getItem('nwnc-motiv') || ''; } catch (e) {}
+  const choices = all.length > 1 ? all.filter(x => x.text !== last) : all;
+  const m = choices[Math.floor(Math.random() * choices.length)];
+  try { localStorage.setItem('nwnc-motiv', m.text); } catch (e) {}
+  return m;
+}
+function showMotivation(w) {
+  const m = pickMotivation(w); if (!m) return;
+  const label = m.kind === 'verse' ? 'Scripture for today' : m.kind === 'coach' ? 'From your coach' : 'Today\'s fuel';
+  $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mvt"><div class="sheet"><div class="motiv">
+    <div class="mk">${label}</div>
+    <div class="mt" id="mvt">${m.kind === 'verse' ? '“' + esc(m.text) + '”' : esc(m.text)}</div>
+    ${m.ref ? `<div class="mr">— ${esc(m.ref)}</div>` : ''}
+    <div class="mw">${esc(w.name)}</div>
+    <button class="btn go" id="mvgo">Let's work</button></div></div></div>`;
+  const close = () => { $('#overlay').innerHTML = ''; };
+  $('#mvgo').onclick = close; $('#mvgo').focus();
+  $('#overlay .modal').onclick = ev => { if (ev.target.classList.contains('modal')) close(); };
+}
+function motivSettingsHtml() {
+  const c = motivCfg(), mode = c.mode || 'both';
+  const opt = (v, l) => `<button data-act="mvmode" data-m="${v}" aria-pressed="${mode === v}">${l}</button>`;
+  return `<div class="mset"><b style="font:800 1.3rem var(--display)">Start-of-workout message</b>
+    <p class="note" style="margin:4px 0 8px">Pops up when an athlete taps Start. Pick what shows.</p>
+    <div class="mode" role="group" aria-label="Message type" style="margin:0 0 8px">${opt('both', 'Both')}${opt('verse', 'Bible')}${opt('push', 'Motivation')}${opt('coach', 'Mine only')}${opt('off', 'Off')}</div>
+    <label class="f" for="mvcustom" style="margin-top:6px">Your own messages <span style="font-weight:400;color:var(--muted)">(one per line, mixed in with the others)</span></label>
+    <textarea id="mvcustom" placeholder="e.g. Block it, frame it, throw it. Every day.">${esc((c.custom || []).join('\n'))}</textarea>
+    <div class="row" style="justify-content:space-between;margin-top:8px"><button class="link" data-act="mvpreview">Preview one</button><button class="btn go small" data-act="mvsave">Save</button></div></div>`;
+}
+async function saveMotiv(patch) {
+  const c = { ...motivCfg(), ...patch, kind: 'motivation', name: '_motivation', updated: Date.now() };
+  try { await S.db.collection('exinfo').doc('_motivation').set(c); S.exinfo = { ...S.exinfo, _motivation: c }; render(); return true; }
+  catch (e) { toast('Not saved. Try again.'); return false; }
+}
+
 function viewInfoList() {
   const names = [...new Set(S.lib.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)))].sort((a, b) => a.localeCompare(b));
-  if (!names.length) return `<div class="empty"><strong>No exercises yet</strong>Add workouts first. Every exercise in them shows up here.</div>`;
+  if (!names.length) return motivSettingsHtml() + `<div class="empty"><strong>No exercises yet</strong>Add workouts first. Every exercise in them shows up here.</div>`;
   const n = names.filter(x => S.exinfo[exKey(x)] && S.exinfo[exKey(x)].text).length;
-  return `<p class="note">Write notes once per exercise. They show up everywhere that exercise is used. ${n} of ${names.length} have notes.</p>` +
+  return motivSettingsHtml() + `<h2 class="h">Exercise notes</h2><p class="note">Write notes once per exercise. They show up everywhere that exercise is used. ${n} of ${names.length} have notes.</p>` +
     names.map(x => { const has = S.exinfo[exKey(x)] && S.exinfo[exKey(x)].text; return `<button class="exi" data-act="info" data-n="${esc(x)}"><span><b>${esc(x)}</b><br><span class="s ${has ? 'y' : ''}">${has ? '✓ Has notes' : 'No notes yet'}</span></span><span class="ibtn ${has ? 'has' : ''}" aria-hidden="true">i</span></button>`; }).join('');
 }
 
@@ -1367,6 +1465,7 @@ async function startSession(w) {
   }
   S.session = { id: newId(), workoutId: w.id, name: w.name, focus: w.focus || '', start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
   saveDraft(); S.tab = 'session'; render(); window.scrollTo(0, 0);
+  showMotivation(w);
 }
 const saveDraft = () => S.session ? local.set('wt-draft', S.session) : local.del('wt-draft');
 
@@ -1539,6 +1638,9 @@ document.addEventListener('click', async ev => {
     }
     case 'openweek': { const w = +t.dataset.w; S.openWeek = S.openWeek === w ? null : w; render(); break; }
     case 'info': openInfo(t.dataset.n); break;
+    case 'mvmode': saveMotiv({ mode: t.dataset.m }).then(ok => ok && toast('Saved.')); break;
+    case 'mvsave': { const lines = ($('#mvcustom').value || '').split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 100); if (await saveMotiv({ custom: lines })) toast(lines.length ? `${lines.length} message${lines.length === 1 ? '' : 's'} saved.` : 'Saved.'); break; }
+    case 'mvpreview': showMotivation({ name: 'Preview' }); break;
     case 'setmax': openMax(t.dataset.u, t.dataset.n); break;
     case 'cnote': openCNote(t.dataset.u, t.dataset.w); break;
     case 'backup': doBackup(); break;
