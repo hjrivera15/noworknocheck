@@ -572,6 +572,19 @@ function matchSchedule(sched, wos) {
 const toText = items => items.map(it => it.type === 'section' ? it.label + ':' :
   `${it.name}${it.sets || it.reps ? ` ${it.sets || 1}x${it.reps || ''}` : ''}${it.load ? ` @ ${it.load}` : ''}${it.notes ? ` - ${it.notes}` : ''}`).join('\n');
 const rxText = it => `${it.sets || 1} × ${it.reps || '—'}${it.load ? ' @ ' + it.load : ''}`;
+/* cardio machines log different numbers than lifts: [field, column label, placeholder key, keyboard] */
+const cardioKind = n => /treadmill/i.test(n) ? 'tread' : /assault|air\s*bike|echo\s*bike|fan\s*bike/i.test(n) ? 'bike' : '';
+const SET_COLS = {
+  tread: [['speed', 'Speed (mph)', 'phS', 'decimal'], ['incline', 'Incline %', 'phI', 'decimal']],
+  bike: [['cal', 'Total calories', 'phC', 'numeric']],
+  '': [['weight', 'Weight', 'phW', 'decimal'], ['reps', 'Reps', 'phR', 'numeric']]
+};
+const setCols = n => SET_COLS[cardioKind(n)];
+const setTxt = (n, x) => {
+  const k = x.speed || x.incline || x.cal ? cardioKind(n) : ''; // older logs saved weight × reps
+  const main = k === 'tread' ? `${x.speed || '—'} mph · ${x.incline || 0}%` : k === 'bike' ? `${x.cal || '—'} cal` : `${x.weight || 'BW'}×${x.reps || '—'}`;
+  return main + (x.rpe ? ' @' + x.rpe : '');
+};
 
 /* ---------- derived ---------- */
 function lastFor(name) {
@@ -648,7 +661,7 @@ function progressHtml(logs, ns) {
 function sessionsHtml(logs, canDelete) {
   return logs.map(l => `<div class="log"><button data-act="openlog" data-id="${l.id}" aria-expanded="${S.openLog === l.id}">
       <span><span class="nm">${esc(l.name)}</span><br><span class="meta">${l.week ? 'Wk ' + l.week + ' · ' : ''}${fmtDate(l.date)} · ${setsDone(l)} sets · ${Math.round(volume(l)).toLocaleString()} lbs${l.rpe ? ' · RPE ' + l.rpe : ''}</span></span><span aria-hidden="true">${S.openLog === l.id ? '−' : '+'}</span></button>
-    ${S.openLog === l.id ? `<div class="body">${l.exercises.filter(e => e.sets.some(s => s.done)).map(e => `<div><b>${esc(e.name)}</b>: ${e.sets.filter(s => s.done).map(s => `${s.weight || 'BW'}×${s.reps || '—'}${s.rpe ? ' @' + s.rpe : ''}`).join(', ')}</div>`).join('')}
+    ${S.openLog === l.id ? `<div class="body">${l.exercises.filter(e => e.sets.some(s => s.done)).map(e => `<div><b>${esc(e.name)}</b>: ${e.sets.filter(s => s.done).map(s => setTxt(e.name, s)).join(', ')}</div>`).join('')}
       ${l.notes ? `<div style="margin-top:6px;color:var(--muted)">“${esc(l.notes)}”</div>` : ''}${canDelete ? `<button class="link" data-act="dellog" data-id="${l.id}">Delete session</button>` : ''}</div>` : ''}</div>`).join('');
 }
 
@@ -980,18 +993,17 @@ function viewSession() {
   if (ph && (ph.name || ph.note)) html += `<div class="coachmsg phasemsg"><span class="cl">Week ${pi.wk} · ${esc(ph.name || '')}${ph.rpe ? ' · RPE ' + esc(ph.rpe) : ''}</span>${esc(ph.note || '')}</div>`;
   s.exercises.forEach((ex, ei) => {
     if (ex.section) html += `<div class="sec-label">${esc(ex.section)}</div>`;
-    const last = lastFor(ex.name);
+    const last = lastFor(ex.name), cols = setCols(ex.name);
     html += `<section class="ex"><div class="ex-h"><h3>${esc(ex.name)}${infoBtn(ex.name)}</h3>
       <div class="rx">${esc(rxText(ex.rx))}${ex.rx.pctInfo ? ` <span class="pctw">${esc(ex.rx.pctInfo)}</span>` : ''}${ex.rx.rpeT ? ' · RPE ' + esc(ex.rx.rpeT) : ''}</div>
       ${ex.rx.notes ? `<div class="cue">${esc(ex.rx.notes)}</div>` : ''}
       ${((S.cnotes[s.workoutId] || {}).ex || {})[exKey(ex.name)] ? `<div class="cue2"><b>For you</b>${linkify(S.cnotes[s.workoutId].ex[exKey(ex.name)])}</div>` : ''}
-      ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => `${x.weight || 'BW'}×${x.reps}${x.rpe ? ' @' + x.rpe : ''}`).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
+      ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => setTxt(ex.name, x)).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
       </div>
-      <table class="sets"><thead><tr><th>Set</th><th>Weight</th><th>Reps</th><th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
+      <table class="sets"><thead><tr><th>Set</th>${cols.map(c => `<th${cols.length === 1 ? ' colspan="2"' : ''}>${c[1]}</th>`).join('')}<th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
       ${ex.sets.map((st, si) => `<tr class="${st.done ? 'done' : ''}">
         <td class="n">${si + 1}</td>
-        <td><input inputmode="decimal" aria-label="Set ${si + 1} weight" data-ei="${ei}" data-si="${si}" data-k="weight" value="${esc(st.weight)}" placeholder="${esc(st.phW || '')}"></td>
-        <td><input inputmode="numeric" aria-label="Set ${si + 1} reps" data-ei="${ei}" data-si="${si}" data-k="reps" value="${esc(st.reps)}" placeholder="${esc(st.phR || '')}"></td>
+        ${cols.map(([k, l, ph, im]) => `<td${cols.length === 1 ? ' colspan="2"' : ''}><input inputmode="${im}" aria-label="Set ${si + 1} ${l.toLowerCase()}" data-ei="${ei}" data-si="${si}" data-k="${k}" value="${esc(st[k] || '')}" placeholder="${esc(st[ph] || '')}"></td>`).join('')}
         <td><input class="rpe" inputmode="decimal" aria-label="Set ${si + 1} RPE" data-ei="${ei}" data-si="${si}" data-k="rpe" value="${esc(st.rpe || '')}" placeholder="${esc(st.phRPE || '–')}"></td>
         <td><button class="chk" data-act="tick" data-ei="${ei}" data-si="${si}" aria-label="Mark set ${si + 1} done" aria-pressed="${!!st.done}">✓</button></td></tr>`).join('')}
       </tbody></table>
@@ -1457,9 +1469,13 @@ async function startSession(w) {
     const load = /^\d+(\.\d+)?$/.test(String(it.load).trim()) ? String(it.load).trim() : '';
     exercises.push({
       name: it.name, section, rx: { ...it },
-      sets: Array.from({ length: n }, (_, i) => ({ weight: '', reps: '', rpe: '', done: false, phRPE: rpePre,
-        phW: (pl && pl.mid ? String(pl.mid) : '') || load || (last && last.sets[Math.min(i, last.sets.length - 1)].weight) || '',
-        phR: /^\d+$/.test(it.reps) ? it.reps : '' }))
+      sets: Array.from({ length: n }, (_, i) => {
+        const prev = last ? last.sets[Math.min(i, last.sets.length - 1)] : {};
+        if (cardioKind(it.name)) return { speed: '', incline: '', cal: '', rpe: '', done: false, phRPE: rpePre, phS: prev.speed || '', phI: prev.incline || '', phC: prev.cal || '' };
+        return { weight: '', reps: '', rpe: '', done: false, phRPE: rpePre,
+          phW: (pl && pl.mid ? String(pl.mid) : '') || load || prev.weight || '',
+          phR: /^\d+$/.test(it.reps) ? it.reps : '' };
+      })
     });
     section = '';
   }
@@ -1487,7 +1503,10 @@ function openFinish() {
     const log = {
       id: s.id, workoutId: s.workoutId, name: s.name, date: Date.now(), week: s.week || null,
       mins: Math.max(1, Math.round((Date.now() - s.start) / 60000)), rpe, notes: $('#fnotes').value.trim(),
-      exercises: s.exercises.map(e => ({ name: e.name, sets: e.sets.map(x => ({ weight: x.weight || x.phW || '', reps: x.reps || x.phR || '', rpe: x.rpe || '', done: !!x.done })) }))
+      exercises: s.exercises.map(e => ({ name: e.name, sets: e.sets.map(x => {
+        const o = {}; setCols(e.name).forEach(([k, , ph]) => { o[k] = x[k] || x[ph] || ''; });
+        return { ...o, rpe: x.rpe || '', done: !!x.done };
+      }) }))
     };
     if (!(S.db && S.uid)) log._local = true;
     $('#overlay').innerHTML = '';
@@ -1514,11 +1533,11 @@ document.addEventListener('click', async ev => {
     case 'edit': { const w = find(); S.edit = JSON.parse(JSON.stringify(w)); S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
     case 'dup': { const w = find(); S.edit = { ...JSON.parse(JSON.stringify(w)), id: null, name: w.name + ' (copy)' }; S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
     case 'tick': {
-      const st = S.session.exercises[ei].sets[si]; st.done = !st.done;
-      if (st.done) { if (!st.weight && st.phW) st.weight = st.phW; if (!st.reps && st.phR) st.reps = st.phR; if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
+      const ex = S.session.exercises[ei], st = ex.sets[si]; st.done = !st.done;
+      if (st.done) { setCols(ex.name).forEach(([k, , ph]) => { if (!st[k] && st[ph]) st[k] = st[ph]; }); if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
       saveDraft(); render(); break;
     }
-    case 'addset': { const ex = S.session.exercises[ei]; const l = ex.sets[ex.sets.length - 1]; ex.sets.push({ weight: '', reps: '', rpe: '', done: false, phRPE: l.phRPE, phW: l.weight || l.phW, phR: l.reps || l.phR }); saveDraft(); render(); break; }
+    case 'addset': { const ex = S.session.exercises[ei]; const l = ex.sets[ex.sets.length - 1]; const ns = { rpe: '', done: false, phRPE: l.phRPE }; setCols(ex.name).forEach(([k, , ph]) => { ns[k] = ''; ns[ph] = l[k] || l[ph] || ''; }); ex.sets.push(ns); saveDraft(); render(); break; }
     case 'rmset': S.session.exercises[ei].sets.pop(); saveDraft(); render(); break;
     case 'discard': if (await ask('Discard this session? Nothing will be saved.', 'Discard session')) { S.session = null; saveDraft(); S.tab = 'week'; render(); } break;
     case 'finish': openFinish(); break;
