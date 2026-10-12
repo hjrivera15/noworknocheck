@@ -55,6 +55,7 @@ header.top .sub{color:var(--muted);font-size:.9rem}
 nav.tabs{display:flex;flex-wrap:wrap;gap:4px 2px;margin:14px 0 18px}
 nav.tabs button{flex:1 1 auto;min-width:64px;border:0;background:transparent;padding:9px 6px;font:700 1.08rem var(--display);color:var(--muted);border-bottom:3px solid var(--line)}
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+@media (max-width:480px){nav.tabs button{min-width:0;padding:9px 3px;font-size:.98rem}nav.tabs .badge{margin-left:3px;padding:0 5px;min-width:18px;height:18px;line-height:18px}}
 
 /* Library */
 .search{width:100%;padding:12px 14px;border:1px solid var(--line);background:var(--field);border-radius:6px;margin-bottom:14px}
@@ -164,6 +165,9 @@ table.sets td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)
 table.sets td.n{font:700 1.3rem var(--display);width:40px;color:var(--muted)}
 table.sets tr.warm td.n{color:var(--plate)}
 table.sets tr.warm input{border-style:dashed}
+table.sets.wide th{font-size:.7rem;padding:4px 1px}
+table.sets.wide td{padding:5px 1px}
+table.sets.wide input{font-size:1.05rem;padding:8px 1px}
 table.sets input{width:100%;max-width:110px;text-align:center;padding:8px 4px;border:1px solid var(--line);border-radius:4px;background:var(--field);font:700 1.5rem var(--display);font-variant-numeric:tabular-nums}
 table.sets input.rpe{max-width:72px}
 table.sets th.rpe-h abbr{text-decoration:none}
@@ -339,6 +343,22 @@ h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
 .upd[hidden]{display:none}
 .upd span{flex:1;font-weight:600;line-height:1.3}
 .upd button{border:0;border-radius:4px;padding:10px 16px;font:700 1.05rem var(--display);background:var(--red-ink);color:var(--red)}
+.badge{display:inline-block;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:10px;background:var(--red);color:var(--red-ink);font:700 .78rem/20px var(--body);text-align:center;vertical-align:2px}
+.mlist{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.msg{max-width:85%;align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px 12px 12px 4px;padding:8px 12px}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--bg);border-color:var(--ink);border-radius:12px 12px 4px 12px}
+.msg.all{border-left:4px solid var(--red)}
+.msg .mh{font-size:.75rem;opacity:.75;margin-bottom:2px}
+.msg .mw{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;opacity:.8}
+.msg .mt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}
+.msg.me a{color:inherit}
+.mcomp{display:flex;gap:8px;align-items:flex-end;margin-top:12px;position:sticky;bottom:0;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
+.mcomp textarea{flex:1;min-height:46px;max-height:160px;padding:10px;border:1px solid var(--line);border-radius:4px;background:var(--field);font:inherit;color:inherit;resize:vertical}
+.threads{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.thread{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:0;border-bottom:1px solid var(--line);background:var(--panel);padding:12px 14px;color:inherit;font:inherit}
+.thread:last-child{border-bottom:0}
+.thread .tn{font:700 1.1rem var(--display)}
+.thread .tp{color:var(--muted);font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 @media (max-width:420px){ header.top h1{font-size:2rem}}
 @media (prefers-reduced-motion:no-preference){ tr.done td{transition:background .2s} }
 </style>
@@ -398,7 +418,7 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 const S = {
-  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
+  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
   db: null, uid: null, canLib: false, filter: '', openLog: null, rest: null
 };
 
@@ -581,19 +601,40 @@ const toText = items => items.map(it => it.type === 'section' ? it.label + ':' :
 const rxText = it => `${it.warm ? '1 warm-up + ' : ''}${it.sets || 1} × ${it.reps || '—'}${it.load ? ' @ ' + it.load : ''}`;
 /* cardio machines log different numbers than lifts: [field, column label, placeholder key, keyboard] */
 const cardioKind = n => /treadmill/i.test(n) ? 'tread' : /assault|air\s*bike|echo\s*bike|fan\s*bike/i.test(n) ? 'bike' : '';
+/* a "timed run" is a run/jog/sprint whose plan is a time (20 min, 90 sec, 1:30); it logs distance + time */
+const RUN_RE = /\b(run|runs|running|jog|jogging|sprint|sprints)\b/i;
+const TIME_RE = /\b\d+(\.\d+)?\s*(min|mins|minutes?|sec|secs|seconds?|hrs?|hours?)\b|\b\d{1,2}:\d{2}\b|\b\d+\s*s\b/i;
+const exKind = (n, rx) => {
+  const c = cardioKind(n), run = RUN_RE.test(n) && TIME_RE.test(`${n} ${(rx && rx.reps) || ''}`);
+  return c === 'tread' && run ? 'treadrun' : c || (run ? 'run' : '');
+};
 const SET_COLS = {
   tread: [['speed', 'Speed (mph)', 'phS', 'decimal'], ['incline', 'Incline %', 'phI', 'decimal']],
+  treadrun: [['speed', 'mph', 'phS', 'decimal'], ['incline', 'Incl %', 'phI', 'decimal'], ['dist', 'Miles', 'phD', 'decimal'], ['time', 'Time', 'phT', 'text']],
+  run: [['dist', 'Distance (mi)', 'phD', 'decimal'], ['time', 'Time', 'phT', 'text']],
   bike: [['cal', 'Total calories', 'phC', 'numeric']],
   '': [['weight', 'Weight', 'phW', 'decimal'], ['reps', 'Reps', 'phR', 'numeric']]
 };
-const setCols = n => SET_COLS[cardioKind(n)];
-const setTxt = (n, x) => {
-  const k = x.speed || x.incline || x.cal ? cardioKind(n) : ''; // older logs saved weight × reps
-  const main = k === 'tread' ? `${x.speed || '—'} mph · ${x.incline || 0}%` : k === 'bike' ? `${x.cal || '—'} cal` : `${x.weight || 'BW'}×${x.reps || '—'}`;
+const setCols = ex => SET_COLS[ex.kind ?? exKind(ex.name, ex.rx)];
+/* "20 min" → "20:00", "90 sec" → "1:30"; used to pre-fill the Time box from the plan */
+const planTime = s => {
+  const m = String(s || '').match(/(\d+(?:\.\d+)?)\s*(min|mins|minutes?|sec|secs|seconds?|s)\b|(\d{1,2}:\d{2})/i); if (!m) return '';
+  if (m[3]) return m[3];
+  const secs = Math.round(+m[1] * (/^m/i.test(m[2]) ? 60 : 1));
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+};
+/* shows whatever a set recorded; older treadmill logs saved weight × reps and still show that way */
+const setTxt = x => {
+  const parts = [];
+  if (x.speed || x.incline) parts.push(`${x.speed || '—'} mph · ${x.incline || 0}%`);
+  if (x.dist) parts.push(`${x.dist} mi`);
+  if (x.time) parts.push(x.time);
+  if (x.cal) parts.push(`${x.cal} cal`);
+  const main = parts.length ? parts.join(' · ') : `${x.weight || 'BW'}×${x.reps || '—'}`;
   return (x.warm ? 'W ' : '') + main + (x.rpe ? ' @' + x.rpe : '');
 };
 /* program.warmup = exercise names that get one lighter warm-up set (set "W") before the working sets */
-const hasWarm = (p, n) => !!p && !cardioKind(n) && (p.warmup || []).some(m => m.toLowerCase() === String(n || '').toLowerCase());
+const hasWarm = (p, n) => !!p && !cardioKind(n) && !RUN_RE.test(n) && (p.warmup || []).some(m => m.toLowerCase() === String(n || '').toLowerCase());
 
 /* ---------- derived ---------- */
 function lastFor(name) {
@@ -670,13 +711,76 @@ function progressHtml(logs, ns) {
 function sessionsHtml(logs, canDelete) {
   return logs.map(l => `<div class="log"><button data-act="openlog" data-id="${l.id}" aria-expanded="${S.openLog === l.id}">
       <span><span class="nm">${esc(l.name)}</span><br><span class="meta">${l.week ? 'Wk ' + l.week + ' · ' : ''}${fmtDate(l.date)} · ${setsDone(l)} sets · ${Math.round(volume(l)).toLocaleString()} lbs${l.rpe ? ' · RPE ' + l.rpe : ''}</span></span><span aria-hidden="true">${S.openLog === l.id ? '−' : '+'}</span></button>
-    ${S.openLog === l.id ? `<div class="body">${l.exercises.filter(e => e.sets.some(s => s.done)).map(e => `<div><b>${esc(e.name)}</b>: ${e.sets.filter(s => s.done).map(s => setTxt(e.name, s)).join(', ')}</div>`).join('')}
+    ${S.openLog === l.id ? `<div class="body">${l.exercises.filter(e => e.sets.some(s => s.done)).map(e => `<div><b>${esc(e.name)}</b>: ${e.sets.filter(s => s.done).map(s => setTxt(s)).join(', ')}</div>`).join('')}
       ${l.notes ? `<div style="margin-top:6px;color:var(--muted)">“${esc(l.notes)}”</div>` : ''}${canDelete ? `<button class="link" data-act="dellog" data-id="${l.id}">Delete session</button>` : ''}</div>` : ''}</div>`).join('');
+}
+
+/* ---------- messages ----------
+   msgs/{id}: {id, uid (athlete's thread, or 'all' = announcement), from (sender uid), coach (bool), name, text, date, workout?}
+   Last-read time lives in users/{me}/data/msgread: athletes {last}, coach {at: {threadUid: time}}. */
+const athName = uid => (S.ppl[uid] && S.ppl[uid].name) || ((S.roster.find(r => r.id === uid) || {}).email || '').split('@')[0] || 'Athlete';
+const seenAt = uid => S.canLib ? (((S.mread || {}).at || {})[uid] || 0) : ((S.mread || {}).last || 0);
+const unreadMsgs = () => S.canLib ? S.msgs.filter(m => !m.coach && m.uid !== 'all' && m.date > seenAt(m.uid)) : S.msgs.filter(m => m.from !== S.uid && m.date > seenAt());
+const unreadIn = uid => S.msgs.filter(m => m.uid === uid && !m.coach && m.date > seenAt(uid)).length;
+function markRead(uid) {
+  if (!S.db || !S.uid) return;
+  const latest = Math.max(0, ...S.msgs.filter(m => !S.canLib || m.uid === uid).map(m => m.date));
+  if (seenAt(uid) >= latest) return;
+  const r = S.mread || {};
+  S.mread = S.canLib ? { kind: 'msgread', id: 'msgread', at: { ...(r.at || {}), [uid]: latest } } : { kind: 'msgread', id: 'msgread', last: latest };
+  Promise.resolve(S.db.collection('users/' + S.uid + '/data').doc('msgread').set(S.mread)).catch(() => {});
+}
+async function sendMsg(uid, text, extra) {
+  text = String(text || '').trim().slice(0, 2000);
+  if (!text || !FS || !S.uid) return false;
+  const m = { id: newId(), uid, from: S.uid, coach: !!S.canLib, name: S.canLib ? 'Coach' : ($('#who2').textContent || 'Athlete'), text, date: Date.now(), ...(extra || {}) };
+  try { await FS.collection('msgs').doc(m.id).set(m); return true; } catch (e) { toast('Message not sent. Check your connection and try again.'); return false; }
+}
+const msgTime = t => new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const bubble = m => {
+  const mine = m.from === S.uid;
+  return `<div class="msg${mine ? ' me' : ''}${m.uid === 'all' ? ' all' : ''}"><div class="mh">${m.uid === 'all' ? '📣 To everyone · ' : ''}${esc(mine ? 'You' : m.coach ? 'Coach' : m.name || 'Athlete')} · ${msgTime(m.date)}</div>${m.workout ? `<div class="mw">After ${esc(m.workout)}</div>` : ''}<div class="mt">${linkify(m.text)}</div></div>`;
+};
+const composer = (to, ph) => `<div class="mcomp"><textarea id="mtext" aria-label="Message" placeholder="${esc(ph)}" maxlength="2000">${esc(S.mdraft)}</textarea><button class="btn go" data-act="msend" data-to="${esc(to)}">Send</button></div>`;
+const scrollMsgs = () => { const c = document.querySelector('.mcomp'); if (c) c.scrollIntoView({ block: 'end' }); };
+function viewMsgs() {
+  if (!S.db) return `<div class="empty"><strong>Messages need the published app</strong>Sign in to send messages.</div>`;
+  const thread = list => list.length ? `<div class="mlist">${list.map(bubble).join('')}</div>` : '';
+  if (!S.canLib) {
+    markRead();
+    return `<h2 class="h">Messages with your coach</h2>${thread(S.msgs) || '<p class="note">No messages yet. Ask your coach anything, or tell them how training is going.</p>'}${composer(S.uid, 'Message your coach…')}`;
+  }
+  if (S.mthread) {
+    const t = S.mthread, all = t === 'all';
+    if (!all) markRead(t);
+    return `<button class="link" data-act="mback">← All conversations</button><h2 class="h">${all ? '📣 Everyone' : esc(athName(t))}</h2>${all ? '<p class="note">Announcements go to every athlete.</p>' : ''}
+      ${thread(S.msgs.filter(m => m.uid === t)) || '<p class="note">No messages yet.</p>'}${composer(t, all ? 'Announcement to every athlete…' : `Message ${athName(t)}…`)}`;
+  }
+  const lastIn = uid => S.msgs.filter(m => m.uid === uid).slice(-1)[0];
+  const rows = [{ id: 'all' }, ...S.roster.filter(r => r.id !== S.uid)].map(r => ({ id: r.id, last: lastIn(r.id), n: r.id === 'all' ? 0 : unreadIn(r.id) }))
+    .sort((a, b) => a.id === 'all' ? -1 : b.id === 'all' ? 1 : (b.n - a.n) || ((b.last ? b.last.date : 0) - (a.last ? a.last.date : 0)));
+  return `<h2 class="h">Messages</h2><div class="threads">${rows.map(r => `<button class="thread" data-act="mopen" data-id="${esc(r.id)}">
+    <span class="tn">${r.id === 'all' ? '📣 Everyone' : esc(athName(r.id))}${r.n ? `<span class="badge">${r.n}</span>` : ''}</span>
+    <span class="tp">${r.last ? esc((r.last.coach ? 'You: ' : '') + r.last.text.replace(/\s+/g, ' ').slice(0, 90)) : 'No messages yet'}</span></button>`).join('')}</div>`;
+}
+/* once per sign-in, after messages + read markers load: pop up anything unread */
+function maybeMsgPopup() {
+  if (S.msgPopped || !msgLoaded.data || !(S.canLib ? msgLoaded.coach : msgLoaded.mine && msgLoaded.all)) return;
+  S.msgPopped = true;
+  const news = unreadMsgs();
+  if (!news.length || S.tab === 'msgs' || $('#overlay').innerHTML.trim()) return;
+  const who = [...new Set(news.map(m => m.uid))].map(athName);
+  const body = S.canLib ? `<p>${news.length} new message${news.length === 1 ? '' : 's'} from ${esc(who.slice(0, 3).join(', '))}${who.length > 3 ? ' and others' : ''}.</p>`
+    : `<div class="mlist">${news.slice(-3).map(bubble).join('')}</div>`;
+  $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mph"><div class="sheet"><h2 id="mph">💬 New message${news.length === 1 ? '' : 's'}</h2>${body}
+    <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" data-act="mlater">Later</button><button class="btn go" data-act="mgo">Open Messages</button></div></div></div>`;
 }
 
 /* ---------- render ---------- */
 function renderTabs() {
   const tabs = [['week', 'Week'], ['program', 'Program'], ['history', 'History'], ['profile', 'Profile']];
+  const nNew = S.db ? unreadMsgs().length : 0;
+  if (S.db) tabs.push(['msgs', 'Messages' + (nNew ? `<span class="badge">${nNew}</span>` : '')]);
   if (S.canLib) tabs.push(['coach', 'Coach']);
   if (S.session) tabs.unshift(['session', 'Live']);
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${l}</button>`).join('');
@@ -859,7 +963,7 @@ function viewCoach() {
   const lib = S.csub === 'library' || S.csub === 'build';
   if (!S.db && !lib) return `<div class="empty"><strong>Coach tools need the published app</strong>Sign in to manage programs and athletes.</div>`;
   const editing = S.edit && S.edit.id && S.lib.some(w => w.id === S.edit.id);
-  return `<div class="mode csub" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="library" aria-pressed="${S.csub === 'library'}">Workouts</button><button data-act="csub" data-m="build" aria-pressed="${S.csub === 'build'}">${editing ? 'Edit' : 'Add'}</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Messages</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
+  return `<div class="mode csub" role="group" aria-label="Coach section"><button data-act="csub" data-m="athletes" aria-pressed="${S.csub === 'athletes'}">Athletes</button><button data-act="csub" data-m="programs" aria-pressed="${S.csub === 'programs'}">Programs</button><button data-act="csub" data-m="library" aria-pressed="${S.csub === 'library'}">Workouts</button><button data-act="csub" data-m="build" aria-pressed="${S.csub === 'build'}">${editing ? 'Edit' : 'Add'}</button><button data-act="csub" data-m="maxes" aria-pressed="${S.csub === 'maxes'}">Maxes</button><button data-act="csub" data-m="info" aria-pressed="${S.csub === 'info'}">Notes</button><button data-act="csub" data-m="backup" aria-pressed="${S.csub === 'backup'}">Backup</button></div>` +
     (backupDue() && S.csub !== 'backup' ? `<div class="bkwarn">${lastBackup() ? 'Last backup was ' + shortDate(lastBackup()) + '.' : 'No backup yet.'} <button class="link" data-act="csub" data-m="backup">Back up now</button></div>` : '') +
     (S.csub === 'library' ? viewLibrary() : S.csub === 'build' ? viewBuild() : S.csub === 'backup' ? viewBackup() : S.csub === 'maxes' ? viewTeamMaxes() : S.csub === 'info' ? viewInfoList() : S.csub === 'programs' ? (S.pedit ? viewProgEdit() : viewProgList()) : S.openAth ? viewAthleteDetail(S.openAth) : viewAthletes());
 }
@@ -970,7 +1074,7 @@ function viewProgEdit() {
   <button class="btn ghost small" data-act="addphase">Add phase</button>`;
   if (names.length) html += `<h2 class="h">Main lifts</h2><p class="note">These take each phase's main sets × reps. Everything else runs as written.</p>
     <div class="chks">${names.map(n => chk('data-cm', n, e.main.includes(n)) + esc(n) + '</label>').join('')}</div>`;
-  const lifts = names.filter(n => !cardioKind(n)), wu = e.warmup || (e.warmup = []);
+  const lifts = names.filter(n => !cardioKind(n) && !RUN_RE.test(n)), wu = e.warmup || (e.warmup = []);
   if (lifts.length) html += `<h2 class="h">Warm-up set</h2><p class="note">Checked exercises get one lighter warm-up set (shown as W) before the working sets. It doesn't count toward progress or lbs moved.</p>
     <div class="row" style="gap:12px;margin:0 0 6px"><button class="link" data-act="wuall">Select all</button><button class="link" data-act="wunone">Clear</button></div>
     <div class="chks">${lifts.map(n => chk('data-cwu', n, wu.includes(n)) + esc(n) + '</label>').join('')}</div>`;
@@ -1006,14 +1110,14 @@ function viewSession() {
   if (ph && (ph.name || ph.note)) html += `<div class="coachmsg phasemsg"><span class="cl">Week ${pi.wk} · ${esc(ph.name || '')}${ph.rpe ? ' · RPE ' + esc(ph.rpe) : ''}</span>${esc(ph.note || '')}</div>`;
   s.exercises.forEach((ex, ei) => {
     if (ex.section) html += `<div class="sec-label">${esc(ex.section)}</div>`;
-    const last = lastFor(ex.name), cols = setCols(ex.name);
+    const last = lastFor(ex.name), cols = setCols(ex);
     html += `<section class="ex"><div class="ex-h"><h3>${esc(ex.name)}${infoBtn(ex.name)}</h3>
       <div class="rx">${esc(rxText(ex.rx))}${ex.rx.pctInfo ? ` <span class="pctw">${esc(ex.rx.pctInfo)}</span>` : ''}${ex.rx.rpeT ? ' · RPE ' + esc(ex.rx.rpeT) : ''}</div>
       ${ex.rx.notes ? `<div class="cue">${esc(ex.rx.notes)}</div>` : ''}
       ${((S.cnotes[s.workoutId] || {}).ex || {})[exKey(ex.name)] ? `<div class="cue2"><b>For you</b>${linkify(S.cnotes[s.workoutId].ex[exKey(ex.name)])}</div>` : ''}
-      ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => setTxt(ex.name, x)).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
+      ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => setTxt(x)).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
       </div>
-      <table class="sets"><thead><tr><th>Set</th>${cols.map(c => `<th${cols.length === 1 ? ' colspan="2"' : ''}>${c[1]}</th>`).join('')}<th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
+      <table class="sets${cols.length > 2 ? ' wide' : ''}"><thead><tr><th>Set</th>${cols.map(c => `<th${cols.length === 1 ? ' colspan="2"' : ''}>${c[1]}</th>`).join('')}<th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
       ${ex.sets.map((st, si) => `<tr class="${st.done ? 'done' : ''}${st.warm ? ' warm' : ''}">
         <td class="n">${st.warm ? '<abbr title="Warm-up set">W</abbr>' : si + (ex.sets[0].warm ? 0 : 1)}</td>
         ${cols.map(([k, l, ph, im]) => `<td${cols.length === 1 ? ' colspan="2"' : ''}><input inputmode="${im}" aria-label="Set ${si + 1} ${l.toLowerCase()}" data-ei="${ei}" data-si="${si}" data-k="${k}" value="${esc(st[k] || '')}" placeholder="${esc(st[ph] || '')}"></td>`).join('')}
@@ -1174,10 +1278,10 @@ async function getAll(path) { const s = await FS.collection(path).get(); return 
 async function doBackup() {
   const btn = $('#bkbtn'); if (btn) { btn.disabled = true; btn.textContent = 'Gathering…'; }
   try {
-    const [library, programs, exinfo, assign, roster] = await Promise.all(['library', 'programs', 'exinfo', 'assign', 'roster'].map(getAll));
+    const [library, programs, exinfo, assign, roster, msgs] = await Promise.all(['library', 'programs', 'exinfo', 'assign', 'roster', 'msgs'].map(getAll));
     const users = {};
     for (const r of roster) users[r._id] = await getAll('users/' + r._id + '/data');
-    const data = { app: 'No Work No Check', version: 1, exportedAt: new Date().toISOString(), exportedBy: (AUTH.currentUser || {}).email || '', library, programs, exinfo, assign, roster, users };
+    const data = { app: 'No Work No Check', version: 1, exportedAt: new Date().toISOString(), exportedBy: (AUTH.currentUser || {}).email || '', library, programs, exinfo, assign, roster, msgs, users };
     const nLogs = Object.values(users).reduce((t, a) => t + a.filter(x => !x.kind).length, 0);
     const name = `NoWorkNoCheck-backup-${isoDate(new Date())}.json`;
     const file = new File([JSON.stringify(data)], name, { type: 'application/json' });
@@ -1199,7 +1303,7 @@ async function doRestore(file) {
   if (!ok) return;
   const ops = [];
   const add = (path, arr) => (arr || []).forEach(d => { const { _id, ...rest } = d; if (_id) ops.push([path, _id, rest]); });
-  add('library', data.library); add('programs', data.programs); add('exinfo', data.exinfo); add('assign', data.assign);
+  add('library', data.library); add('programs', data.programs); add('exinfo', data.exinfo); add('assign', data.assign); add('msgs', data.msgs);
   Object.entries(users).forEach(([uid, arr]) => add('users/' + uid + '/data', arr));
   try {
     for (let i = 0; i < ops.length; i += 400) {
@@ -1444,9 +1548,11 @@ const fmt = s => `${Math.floor(s / 60)}:${String(Math.max(0, s % 60)).padStart(2
 
 function render() {
   if (S.tab === 'session' && !S.session) S.tab = 'week';
-  renderTabs();
-  const v = ({ profile: viewProfile, coach: viewCoach, week: viewWeek, program: viewProgram, session: viewSession, history: viewHistory }[S.tab] || viewWeek)();
+  const v = ({ profile: viewProfile, coach: viewCoach, week: viewWeek, program: viewProgram, session: viewSession, history: viewHistory, msgs: viewMsgs }[S.tab] || viewWeek)();
+  renderTabs(); // after the view, so opening Messages clears the badge right away
+  const ta = document.activeElement && document.activeElement.id === 'mtext' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
   $('#main').innerHTML = v;
+  if (ta && $('#mtext')) { const m = $('#mtext'); m.focus(); m.setSelectionRange(ta[0], ta[1]); }
   renderDock();
 }
 
@@ -1478,13 +1584,14 @@ async function startSession(w) {
     const rpePre = presetOK && !(p.skipSections || []).includes(sec) ? (ph.preset || '') : '';
     if (rpePre) it.rpeT = ph.rpe || rpePre;
     const n = Math.max(1, Math.min(20, parseInt(it.sets) || 1));
-    const last = lastFor(it.name), warm = hasWarm(p, it.name);
+    const kind = exKind(it.name, it), last = lastFor(it.name), warm = !kind && hasWarm(p, it.name);
     const lastWork = last ? last.sets.filter(s => !s.warm) : [], lastWarm = last && last.sets.find(s => s.warm);
     const load = /^\d+(\.\d+)?$/.test(String(it.load).trim()) ? String(it.load).trim() : '';
     if (warm) it.warm = true;
     const sets = Array.from({ length: n }, (_, i) => {
       const prev = lastWork.length ? lastWork[Math.min(i, lastWork.length - 1)] : {};
-      if (cardioKind(it.name)) return { speed: '', incline: '', cal: '', rpe: '', done: false, phRPE: rpePre, phS: prev.speed || '', phI: prev.incline || '', phC: prev.cal || '' };
+      if (kind) return { speed: '', incline: '', cal: '', dist: '', time: '', rpe: '', done: false, phRPE: rpePre,
+        phS: prev.speed || '', phI: prev.incline || '', phC: prev.cal || '', phD: prev.dist || '', phT: planTime(it.reps) || prev.time || '' };
       return { weight: '', reps: '', rpe: '', done: false, phRPE: rpePre,
         phW: (pl && pl.mid ? String(pl.mid) : '') || load || prev.weight || '',
         phR: /^\d+$/.test(it.reps) ? it.reps : '' };
@@ -1494,7 +1601,7 @@ async function startSession(w) {
       sets.unshift({ warm: true, weight: '', reps: '', rpe: '', done: false, phRPE: '',
         phW: (lastWarm && lastWarm.weight) || (work ? String(round5(work * 0.5)) : ''), phR: sets[0].phR });
     }
-    exercises.push({ name: it.name, section, rx: { ...it }, sets });
+    exercises.push({ name: it.name, kind, section, rx: { ...it }, sets });
     section = '';
   }
   S.session = { id: newId(), workoutId: w.id, name: w.name, focus: w.focus || '', start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
@@ -1511,18 +1618,22 @@ function openFinish() {
     <p class="note">${done} sets checked off. Unchecked sets aren't saved.</p>
     <label class="f">How hard was it? (session RPE)</label>
     <div class="rpe" id="rpe">${Array.from({ length: 10 }, (_, i) => `<button data-v="${i + 1}" aria-pressed="false">${i + 1}</button>`).join('')}</div>
-    <label class="f" for="fnotes">Notes</label><textarea class="inp" id="fnotes" style="min-height:70px;font-family:var(--body)" placeholder="How did it feel? Anything to adjust next time?"></textarea>
+    <label class="f" for="fpros">👍 What went well?</label><textarea class="inp" id="fpros" style="min-height:60px;font-family:var(--body)" placeholder="e.g. Squats moved fast, hit every rep"></textarea>
+    <label class="f" for="fcons">👎 What didn't?</label><textarea class="inp" id="fcons" style="min-height:60px;font-family:var(--body)" placeholder="e.g. Left knee sore on lunges"></textarea>
+    ${S.db && !S.canLib ? '<p class="note" style="margin:6px 0 0">Your coach gets these in Messages.</p>' : ''}
     <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" id="fcancel">Keep going</button><button class="btn go" id="fsave">Save session</button></div>
   </div></div>`;
   $('#rpe').onclick = ev => { const b = ev.target.closest('button'); if (!b) return; rpe = +b.dataset.v; [...$('#rpe').children].forEach(x => x.setAttribute('aria-pressed', x === b)); };
   $('#fcancel').onclick = () => $('#overlay').innerHTML = '';
   $('#fsave').onclick = async () => {
     const s = S.session;
+    const pros = $('#fpros').value.trim(), cons = $('#fcons').value.trim();
+    const notes = [pros && '👍 ' + pros, cons && '👎 ' + cons].filter(Boolean).join('\n');
     const log = {
       id: s.id, workoutId: s.workoutId, name: s.name, date: Date.now(), week: s.week || null,
-      mins: Math.max(1, Math.round((Date.now() - s.start) / 60000)), rpe, notes: $('#fnotes').value.trim(),
+      mins: Math.max(1, Math.round((Date.now() - s.start) / 60000)), rpe, pros, cons, notes,
       exercises: s.exercises.map(e => ({ name: e.name, sets: e.sets.map(x => {
-        const o = {}; setCols(e.name).forEach(([k, , ph]) => { o[k] = x[k] || x[ph] || ''; });
+        const o = {}; setCols(e).forEach(([k, , ph]) => { o[k] = x[k] || x[ph] || ''; });
         return { ...o, rpe: x.rpe || '', done: !!x.done, ...(x.warm ? { warm: true } : {}) };
       }) }))
     };
@@ -1532,7 +1643,8 @@ function openFinish() {
     const idx = S.sched.days.indexOf(log.workoutId);
     S.tab = idx >= 0 ? 'week' : 'history'; S.openLog = log.id;
     await store.saveLog(log);
-    render(); toast(idx >= 0 ? 'Session saved — day checked off.' : 'Session saved.');
+    const sent = notes && S.db && !S.canLib && await sendMsg(S.uid, notes, { workout: log.name, logId: log.id });
+    render(); toast((idx >= 0 ? 'Session saved — day checked off.' : 'Session saved.') + (sent ? ' Sent to your coach.' : ''));
   };
 }
 
@@ -1542,7 +1654,7 @@ function openFinish() {
 /* ---------- events ---------- */
 document.addEventListener('click', async ev => {
   const t = ev.target.closest('[data-tab],[data-act]'); if (!t) return;
-  if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
+  if (t.dataset.tab) { S.tab = t.dataset.tab; if (S.tab === 'msgs') S.mthread = null; render(); if (S.tab === 'msgs') scrollMsgs(); return; }
   const a = t.dataset.act, id = t.dataset.id, find = () => S.lib.find(w => w.id === id);
   const ei = +t.dataset.ei, si = +t.dataset.si, i = +t.dataset.i;
   switch (a) {
@@ -1552,10 +1664,10 @@ document.addEventListener('click', async ev => {
     case 'dup': { const w = find(); S.edit = { ...JSON.parse(JSON.stringify(w)), id: null, name: w.name + ' (copy)' }; S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
     case 'tick': {
       const ex = S.session.exercises[ei], st = ex.sets[si]; st.done = !st.done;
-      if (st.done) { setCols(ex.name).forEach(([k, , ph]) => { if (!st[k] && st[ph]) st[k] = st[ph]; }); if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
+      if (st.done) { setCols(ex).forEach(([k, , ph]) => { if (!st[k] && st[ph]) st[k] = st[ph]; }); if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
       saveDraft(); render(); break;
     }
-    case 'addset': { const ex = S.session.exercises[ei]; const l = ex.sets[ex.sets.length - 1]; const ns = { rpe: '', done: false, phRPE: l.phRPE }; setCols(ex.name).forEach(([k, , ph]) => { ns[k] = ''; ns[ph] = l[k] || l[ph] || ''; }); ex.sets.push(ns); saveDraft(); render(); break; }
+    case 'addset': { const ex = S.session.exercises[ei]; const l = ex.sets[ex.sets.length - 1]; const ns = { rpe: '', done: false, phRPE: l.phRPE }; setCols(ex).forEach(([k, , ph]) => { ns[k] = ''; ns[ph] = l[k] || l[ph] || ''; }); ex.sets.push(ns); saveDraft(); render(); break; }
     case 'rmset': S.session.exercises[ei].sets.pop(); saveDraft(); render(); break;
     case 'discard': if (await ask('Discard this session? Nothing will be saved.', 'Discard session')) { S.session = null; saveDraft(); S.tab = 'week'; render(); } break;
     case 'finish': openFinish(); break;
@@ -1625,6 +1737,11 @@ document.addEventListener('click', async ev => {
       break;
     }
     case 'newprog': S.pedit = { id: null, name: '', weeks: 6, days: PAD7([]), phases: [], main: [], presetWorkouts: [], skipSections: [], warmup: [] }; render(); window.scrollTo(0, 0); break;
+    case 'msend': { const box = $('#mtext'); if (await sendMsg(t.dataset.to, box ? box.value : S.mdraft)) { S.mdraft = ''; render(); scrollMsgs(); } break; }
+    case 'mopen': S.mthread = id; S.mdraft = ''; render(); scrollMsgs(); break;
+    case 'mback': S.mthread = null; S.mdraft = ''; render(); window.scrollTo(0, 0); break;
+    case 'mlater': $('#overlay').innerHTML = ''; break;
+    case 'mgo': $('#overlay').innerHTML = ''; S.tab = 'msgs'; S.mthread = null; render(); scrollMsgs(); break;
     case 'wuall': S.pedit.warmup = [...document.querySelectorAll('[data-cwu]')].map(x => x.dataset.cwu); render(); break;
     case 'wunone': S.pedit.warmup = []; render(); break;
     case 'editprog': S.pedit = progEditFrom(S.programs.find(p => p.id === id)); render(); window.scrollTo(0, 0); break;
@@ -1716,6 +1833,7 @@ function setPx(t) {
 }
 document.addEventListener('input', ev => {
   const t = ev.target;
+  if (t.id === 'mtext') { S.mdraft = t.value; return; }
   if (t.id === 'search') { S.filter = t.value; const pos = t.selectionStart; render(); const s = $('#search'); s.focus(); s.setSelectionRange(pos, pos); return; }
   if (t.dataset.ei !== undefined && t.dataset.k) { S.session.exercises[+t.dataset.ei].sets[+t.dataset.si][t.dataset.k] = t.value; saveDraft(); return; }
   if (t.dataset.bd) { S.bdraft[t.dataset.bd] = t.value; return; }
@@ -1764,7 +1882,7 @@ render();
 const SEED = {"library":[{"created":1790690004000,"focus":"Monday · Strength + Size · Build lower-body muscle and strength for squatting, throwing, blocking and explosiveness","id":"catcher-d1","items":[{"label":"Strength + Size","type":"section"},{"load":"","name":"Back Squat","notes":"","reps":"6","rest":"150","sets":"4","type":"ex"},{"load":"","name":"Romanian Deadlift","notes":"","reps":"8","rest":"120","sets":"4","type":"ex"},{"load":"","name":"Bulgarian Split Squat","notes":"","reps":"8/leg","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Barbell Glute Bridge","notes":"","reps":"10-12","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Walking Lunge","notes":"","reps":"10/leg","rest":"75","sets":"2","type":"ex"},{"load":"","name":"Standing Calf Raise","notes":"","reps":"12-15","rest":"60","sets":"3","type":"ex"},{"label":"Core","type":"section"},{"load":"","name":"Pallof Press","notes":"","reps":"10/side","rest":"45","sets":"3","type":"ex"},{"load":"","name":"Dead Bug","notes":"","reps":"8/side","rest":"45","sets":"3","type":"ex"}],"name":"Day 1 — Lower Body","updated":1790690004000},{"created":1790690003000,"focus":"Tuesday · Strength + Size · Finish with shoulder/arm care","id":"catcher-d2","items":[{"label":"Strength + Size","type":"section"},{"load":"","name":"Bench Press","notes":"","reps":"6","rest":"150","sets":"4","type":"ex"},{"load":"","name":"Pull-Ups","notes":"","reps":"6-10","rest":"120","sets":"4","type":"ex"},{"load":"","name":"Incline DB Bench","notes":"","reps":"8-10","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Chest-Supported Row","notes":"","reps":"8-10","rest":"90","sets":"4","type":"ex"},{"load":"","name":"Landmine Press","notes":"","reps":"8/side","rest":"75","sets":"3","type":"ex"},{"load":"","name":"Face Pull","notes":"","reps":"12-15","rest":"60","sets":"3","type":"ex"},{"load":"","name":"DB Hammer Curl","notes":"","reps":"10-12","rest":"60","sets":"3","type":"ex"},{"load":"","name":"Cable Triceps Pressdown","notes":"","reps":"10-12","rest":"60","sets":"3","type":"ex"},{"label":"Shoulder/Arm Care — 2 rounds","type":"section"},{"load":"","name":"Band External Rotation","notes":"","reps":"12","rest":"30","sets":"2","type":"ex"},{"load":"","name":"Band Pull-Apart","notes":"","reps":"15","rest":"30","sets":"2","type":"ex"},{"load":"","name":"Scap Push-Up","notes":"","reps":"10","rest":"30","sets":"2","type":"ex"},{"load":"","name":"Serratus Wall Slide","notes":"","reps":"10","rest":"30","sets":"2","type":"ex"}],"name":"Day 2 — Upper Body","updated":1790690003000},{"created":1790690002000,"focus":"Thursday · Only dedicated plyo day · Not conditioning — every jump and throw explosive, rest enough to keep quality","id":"catcher-d3","items":[{"label":"Warm-up — 2 rounds","type":"section"},{"load":"","name":"Lateral Shuffle","notes":"","reps":"10yd","rest":"","sets":"2","type":"ex"},{"load":"","name":"A-Skip","notes":"","reps":"10yd","rest":"","sets":"2","type":"ex"},{"load":"","name":"Hip Airplane","notes":"","reps":"5/side","rest":"","sets":"2","type":"ex"},{"load":"","name":"Lateral Lunge","notes":"","reps":"6/side","rest":"","sets":"2","type":"ex"},{"load":"","name":"Pogo Jumps (warm-up)","notes":"","reps":"15","rest":"","sets":"2","type":"ex"},{"load":"","name":"Bodyweight Squat","notes":"","reps":"10","rest":"","sets":"2","type":"ex"},{"label":"Jumping","type":"section"},{"load":"","name":"Pogo Jumps","notes":"","reps":"15","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Countermovement Jump","notes":"","reps":"4","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Broad Jump","notes":"","reps":"3","rest":"90","sets":"3","type":"ex"},{"label":"Lateral/Catcher Power","type":"section"},{"load":"","name":"Lateral Bound → Stick","notes":"","reps":"4/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Skater Jump","notes":"","reps":"5/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Lateral Shuffle → Bound","notes":"","reps":"3/side","rest":"90","sets":"3","type":"ex"},{"label":"Pop-Up Power","type":"section"},{"load":"","name":"Split-Stance Jump","notes":"","reps":"4/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Kneeling → Jump","notes":"","reps":"4","rest":"90","sets":"3","type":"ex"},{"label":"Rotational Power","type":"section"},{"load":"","name":"Rotational Med-Ball Scoop Toss","notes":"","reps":"4/side","rest":"90","sets":"4","type":"ex"},{"load":"","name":"Shotput Med-Ball Throw","notes":"","reps":"4/side","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Overhead Med-Ball Slam","notes":"","reps":"5","rest":"90","sets":"3","type":"ex"},{"label":"Catcher Strength","type":"section"},{"load":"","name":"Front-Foot Elevated Split Squat","notes":"","reps":"6/leg","rest":"90","sets":"3","type":"ex"},{"load":"","name":"Copenhagen Plank","notes":"","reps":"20-30s/side","rest":"45","sets":"3","type":"ex"},{"load":"","name":"Farmer Carry","notes":"","reps":"30-40yd","rest":"60","sets":"3","type":"ex"}],"name":"Day 3 — Catcher Plyometrics + Power","updated":1790690002000},{"created":1790690001000,"focus":"Saturday · Strength + Hypertrophy · Target ~50–60 minutes","id":"catcher-d4","items":[{"label":"Strength + Hypertrophy","type":"section"},{"load":"","name":"Incline DB Bench Press","notes":"Rest 2–3 min · This is your primary heavy lift.","reps":"6-8","rest":"","sets":"3","type":"ex"},{"load":"","name":"Weighted Back Extension","notes":"Rest 90 sec · Hold a plate or DB at the chest. Squeeze glutes at the top.","reps":"8-12","rest":"","sets":"3","type":"ex"},{"load":"","name":"Front-Foot Elevated Reverse Lunge","notes":"Rest 90 sec · Unilateral leg strength without another squat variation.","reps":"8/leg","rest":"","sets":"3","type":"ex"},{"load":"","name":"Chest-Supported Row","notes":"Rest 90 sec","reps":"8-10","rest":"","sets":"3","type":"ex"},{"load":"","name":"Nordic Hamstring Curl","notes":"Rest 90 sec · Use assistance if needed. Quality over reps.","reps":"5-8","rest":"","sets":"3","type":"ex"},{"load":"","name":"Leg Extension","notes":"Rest 60–75 sec · Controlled eccentric + hard quad contraction.","reps":"10-15","rest":"","sets":"3","type":"ex"},{"load":"","name":"Landmine Press","notes":"Rest 60–90 sec","reps":"8/side","rest":"","sets":"2","type":"ex"},{"label":"Core Superset — 2 rounds","type":"section"},{"load":"","name":"Hanging Knee Raise","notes":"","reps":"10-12","rest":"","sets":"2","type":"ex"},{"load":"","name":"Suitcase Carry","notes":"","reps":"30yd/side","rest":"","sets":"2","type":"ex"}],"name":"Day 4 — Full Body","updated":1790690001000}],"programs":[{"days":["catcher-d1","catcher-d2",null,"catcher-d3",null,"catcher-d4",null],"id":"catcher-offseason","main":["Back Squat","Romanian Deadlift","Bench Press","Pull-Ups","Incline DB Bench Press"],"name":"Catcher Off-Season","phases":[{"from":1,"main":{"reps":"6-8"},"name":"Foundation","note":"Learn the movements. Don't chase max weights.","preset":"7","rpe":"7","to":2},{"from":3,"main":{"reps":"5-6","sets":"4"},"name":"Build","note":"Add weight when all reps are clean.","preset":"8","rpe":"7.5–8","to":4},{"from":5,"main":{"reps":"4-5","sets":"4"},"name":"Strength","note":"Still don't grind or fail reps.","preset":"8.5","rpe":"8–8.5","to":6}],"presetWorkouts":["catcher-d1","catcher-d2","catcher-d4"],"skipSections":["Core","Shoulder/Arm Care — 2 rounds","Core Superset — 2 rounds"],"updated":1790712200000,"weeks":6}]};
 const CFG = window.NWNC_CONFIG || {};
 const COACHES = (CFG.coachEmails || []).map(x => String(x).trim().toLowerCase());
-let FS = null, AUTH = null, unsubs = [], athSubs = {};
+let FS = null, AUTH = null, unsubs = [], athSubs = {}, msgLoaded = {};
 const fast = p => Promise.race([p, new Promise(r => setTimeout(r, 2500))]);
 function wrapDb(fs) {
   return {
@@ -1821,9 +1939,9 @@ function wireAuth() {
   $('#signout').onclick = async () => { if (S.session && !(await ask('You have a workout in progress. Sign out anyway?', 'Sign out'))) return; S.session = null; saveDraft(); AUTH.signOut(); };
 }
 function splitData(all) {
-  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}; let prof = {};
-  all.forEach(x => { if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
-  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes };
+  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}; let prof = {}, mread = {};
+  all.forEach(x => { if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'msgread') mread = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
+  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes, mread };
 }
 function startData(u) {
   unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; athSubs = {}; S.athData = {}; S.openAth = null; S.exinfo = {}; S.body = []; S.prof = {}; S.bdraft = {}; S.maxes = {}; S.cnotes = {};
@@ -1857,10 +1975,15 @@ function startData(u) {
   } else {
     on(FS.doc('assign/' + u.uid), snap => { S.assign = snap.exists ? { [u.uid]: snap.data() } : {}; applyMine(); render(); });
   }
+  S.msgs = []; S.mread = {}; S.mthread = null; S.msgPopped = false; msgLoaded = {};
+  const msgsIn = {};
+  const onMsgs = key => snap => { msgsIn[key] = snap.docs.map(d => d.data()); S.msgs = Object.values(msgsIn).flat().sort((a, b) => a.date - b.date); msgLoaded[key] = true; render(); maybeMsgPopup(); };
+  if (S.canLib) on(FS.collection('msgs').orderBy('date', 'desc').limit(500), onMsgs('coach'));
+  else { on(FS.collection('msgs').where('uid', '==', u.uid), onMsgs('mine')); on(FS.collection('msgs').where('uid', '==', 'all'), onMsgs('all')); }
   on(FS.collection('users/' + u.uid + '/data'), snap => {
     const sd = splitData(snap.docs.map(d => d.data()));
-    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes;
-    render();
+    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes; S.mread = sd.mread;
+    msgLoaded.data = true; render(); maybeMsgPopup();
   });
 }
 (function bootFirebase() {
