@@ -162,6 +162,8 @@ table.sets{width:100%;border-collapse:collapse}
 table.sets th{font:600 .8rem var(--body);color:var(--muted);text-align:center;padding:4px}
 table.sets td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}
 table.sets td.n{font:700 1.3rem var(--display);width:40px;color:var(--muted)}
+table.sets tr.warm td.n{color:var(--plate)}
+table.sets tr.warm input{border-style:dashed}
 table.sets input{width:100%;max-width:110px;text-align:center;padding:8px 4px;border:1px solid var(--line);border-radius:4px;background:var(--field);font:700 1.5rem var(--display);font-variant-numeric:tabular-nums}
 table.sets input.rpe{max-width:72px}
 table.sets th.rpe-h abbr{text-decoration:none}
@@ -576,7 +578,7 @@ function matchSchedule(sched, wos) {
 }
 const toText = items => items.map(it => it.type === 'section' ? it.label + ':' :
   `${it.name}${it.sets || it.reps ? ` ${it.sets || 1}x${it.reps || ''}` : ''}${it.load ? ` @ ${it.load}` : ''}${it.notes ? ` - ${it.notes}` : ''}`).join('\n');
-const rxText = it => `${it.sets || 1} × ${it.reps || '—'}${it.load ? ' @ ' + it.load : ''}`;
+const rxText = it => `${it.warm ? '1 warm-up + ' : ''}${it.sets || 1} × ${it.reps || '—'}${it.load ? ' @ ' + it.load : ''}`;
 /* cardio machines log different numbers than lifts: [field, column label, placeholder key, keyboard] */
 const cardioKind = n => /treadmill/i.test(n) ? 'tread' : /assault|air\s*bike|echo\s*bike|fan\s*bike/i.test(n) ? 'bike' : '';
 const SET_COLS = {
@@ -588,8 +590,10 @@ const setCols = n => SET_COLS[cardioKind(n)];
 const setTxt = (n, x) => {
   const k = x.speed || x.incline || x.cal ? cardioKind(n) : ''; // older logs saved weight × reps
   const main = k === 'tread' ? `${x.speed || '—'} mph · ${x.incline || 0}%` : k === 'bike' ? `${x.cal || '—'} cal` : `${x.weight || 'BW'}×${x.reps || '—'}`;
-  return main + (x.rpe ? ' @' + x.rpe : '');
+  return (x.warm ? 'W ' : '') + main + (x.rpe ? ' @' + x.rpe : '');
 };
+/* program.warmup = exercise names that get one lighter warm-up set (set "W") before the working sets */
+const hasWarm = (p, n) => !!p && !cardioKind(n) && (p.warmup || []).some(m => m.toLowerCase() === String(n || '').toLowerCase());
 
 /* ---------- derived ---------- */
 function lastFor(name) {
@@ -604,7 +608,7 @@ function lastFor(name) {
 function bests() {
   const map = {};
   for (const l of S.logs) for (const ex of (l.exercises || [])) for (const s of ex.sets) {
-    if (!s.done) continue;
+    if (!s.done || s.warm) continue;
     const w = num(s.weight), r = num(s.reps), k = ex.name.toLowerCase();
     const m = map[k] || (map[k] = { name: ex.name, top: 0, topReps: 0, est: 0, date: 0, estDate: 0 });
     if (w > m.top || (w === m.top && r > m.topReps)) { m.top = w; m.topReps = r; m.date = l.date; }
@@ -612,13 +616,13 @@ function bests() {
   }
   return Object.values(map).filter(m => m.top > 0).sort((a, b) => a.name.localeCompare(b.name));
 }
-const volume = l => (l.exercises || []).reduce((t, ex) => t + ex.sets.filter(s => s.done).reduce((a, s) => a + num(s.weight) * num(s.reps), 0), 0);
+const volume = l => (l.exercises || []).reduce((t, ex) => t + ex.sets.filter(s => s.done && !s.warm).reduce((a, s) => a + num(s.weight) * num(s.reps), 0), 0);
 const setsDone = l => (l.exercises || []).reduce((t, ex) => t + ex.sets.filter(s => s.done).length, 0);
 const shortDate = t => new Date(t).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
 function liftSeries(logs) {
   const map = {};
   [...logs].sort((a, b) => a.date - b.date).forEach(l => (l.exercises || []).forEach(ex => {
-    const done = (ex.sets || []).filter(s => s.done && num(s.weight) > 0);
+    const done = (ex.sets || []).filter(s => s.done && !s.warm && num(s.weight) > 0);
     if (!done.length) return;
     const top = done.reduce((m, s) => (num(s.weight) > num(m.weight) || (num(s.weight) === num(m.weight) && num(s.reps) > num(m.reps))) ? s : m);
     const k = ex.name.toLowerCase();
@@ -783,7 +787,7 @@ function phaseRx(wid, it, sec, ph, p) {
   const r = applyPhase(it, wid, ph, p);
   const rpe = ph && (p.presetWorkouts || []).includes(wid) && !(p.skipSections || []).includes(sec) ? (ph.rpe || ph.preset) : '';
   const pl = !S.previewProg && pctLoad(r.load, it.name, S.maxes);
-  return `${r.sets || 1} × ${r.reps || '—'}${r.load ? ' @ ' + r.load : ''}${pl && pl.text ? ' (' + pl.text + ')' : ''}${rpe ? ' · RPE ' + rpe : ''}`;
+  return `${hasWarm(p, it.name) ? '1 warm-up + ' : ''}${r.sets || 1} × ${r.reps || '—'}${r.load ? ' @ ' + r.load : ''}${pl && pl.text ? ' (' + pl.text + ')' : ''}${rpe ? ' · RPE ' + rpe : ''}`;
 }
 function viewProgram() {
   let pick = '';
@@ -936,7 +940,7 @@ function viewProgList() {
 const flatPhase = ph => ({ days: PAD7(ph.days), from: ph.from ?? '', to: ph.to ?? '', name: ph.name || '', rpe: ph.rpe || '', preset: ph.preset || '', msets: (ph.main || {}).sets || '', mreps: (ph.main || {}).reps || '', mpct: (ph.main || {}).pct || '', note: ph.note || '', ex: (ph.ex || []).map(o => ({ wid: o.wid || '', name: o.name || '', sets: o.sets || '', reps: o.reps || '', load: o.load || '', notes: o.notes || '' })) });
 function progEditFrom(pr, copy) {
   return { id: copy ? null : pr.id, name: copy ? pr.name + ' (copy)' : pr.name, weeks: pr.weeks || 6, days: PAD7(pr.days),
-    phases: (pr.phases || []).map(flatPhase), main: [...(pr.main || [])], presetWorkouts: [...(pr.presetWorkouts || [])], skipSections: [...(pr.skipSections || [])] };
+    phases: (pr.phases || []).map(flatPhase), main: [...(pr.main || [])], presetWorkouts: [...(pr.presetWorkouts || [])], skipSections: [...(pr.skipSections || [])], warmup: [...(pr.warmup || [])] };
 }
 function viewProgEdit() {
   const e = S.pedit;
@@ -966,6 +970,10 @@ function viewProgEdit() {
   <button class="btn ghost small" data-act="addphase">Add phase</button>`;
   if (names.length) html += `<h2 class="h">Main lifts</h2><p class="note">These take each phase's main sets × reps. Everything else runs as written.</p>
     <div class="chks">${names.map(n => chk('data-cm', n, e.main.includes(n)) + esc(n) + '</label>').join('')}</div>`;
+  const lifts = names.filter(n => !cardioKind(n)), wu = e.warmup || (e.warmup = []);
+  if (lifts.length) html += `<h2 class="h">Warm-up set</h2><p class="note">Checked exercises get one lighter warm-up set (shown as W) before the working sets. It doesn't count toward progress or lbs moved.</p>
+    <div class="row" style="gap:12px;margin:0 0 6px"><button class="link" data-act="wuall">Select all</button><button class="link" data-act="wunone">Clear</button></div>
+    <div class="chks">${lifts.map(n => chk('data-cwu', n, wu.includes(n)) + esc(n) + '</label>').join('')}</div>`;
   if (wos.length) html += `<h2 class="h">RPE preset applies to</h2><div class="chks">${wos.map(w => chk('data-cw', w.id, e.presetWorkouts.includes(w.id)) + esc(w.name) + '</label>').join('')}</div>`;
   if (secs.length) html += `<p class="note" style="margin-top:12px">Skip the RPE preset in these sections:</p><div class="chks">${secs.map(s => chk('data-cs', s, e.skipSections.includes(s)) + esc(s) + '</label>').join('')}</div>`;
   html += `<div class="row" style="margin-top:22px;justify-content:space-between"><span>${e.id ? '<button class="link" data-act="delprog">Delete program</button>' : ''}<button class="link" data-act="cancelprog">Cancel</button></span><button class="btn go" data-act="saveprog">Save program</button></div>`;
@@ -1006,8 +1014,8 @@ function viewSession() {
       ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => setTxt(ex.name, x)).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
       </div>
       <table class="sets"><thead><tr><th>Set</th>${cols.map(c => `<th${cols.length === 1 ? ' colspan="2"' : ''}>${c[1]}</th>`).join('')}<th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
-      ${ex.sets.map((st, si) => `<tr class="${st.done ? 'done' : ''}">
-        <td class="n">${si + 1}</td>
+      ${ex.sets.map((st, si) => `<tr class="${st.done ? 'done' : ''}${st.warm ? ' warm' : ''}">
+        <td class="n">${st.warm ? '<abbr title="Warm-up set">W</abbr>' : si + (ex.sets[0].warm ? 0 : 1)}</td>
         ${cols.map(([k, l, ph, im]) => `<td${cols.length === 1 ? ' colspan="2"' : ''}><input inputmode="${im}" aria-label="Set ${si + 1} ${l.toLowerCase()}" data-ei="${ei}" data-si="${si}" data-k="${k}" value="${esc(st[k] || '')}" placeholder="${esc(st[ph] || '')}"></td>`).join('')}
         <td><input class="rpe" inputmode="decimal" aria-label="Set ${si + 1} RPE" data-ei="${ei}" data-si="${si}" data-k="rpe" value="${esc(st.rpe || '')}" placeholder="${esc(st.phRPE || '–')}"></td>
         <td><button class="chk" data-act="tick" data-ei="${ei}" data-si="${si}" aria-label="Mark set ${si + 1} done" aria-pressed="${!!st.done}">✓</button></td></tr>`).join('')}
@@ -1470,18 +1478,23 @@ async function startSession(w) {
     const rpePre = presetOK && !(p.skipSections || []).includes(sec) ? (ph.preset || '') : '';
     if (rpePre) it.rpeT = ph.rpe || rpePre;
     const n = Math.max(1, Math.min(20, parseInt(it.sets) || 1));
-    const last = lastFor(it.name);
+    const last = lastFor(it.name), warm = hasWarm(p, it.name);
+    const lastWork = last ? last.sets.filter(s => !s.warm) : [], lastWarm = last && last.sets.find(s => s.warm);
     const load = /^\d+(\.\d+)?$/.test(String(it.load).trim()) ? String(it.load).trim() : '';
-    exercises.push({
-      name: it.name, section, rx: { ...it },
-      sets: Array.from({ length: n }, (_, i) => {
-        const prev = last ? last.sets[Math.min(i, last.sets.length - 1)] : {};
-        if (cardioKind(it.name)) return { speed: '', incline: '', cal: '', rpe: '', done: false, phRPE: rpePre, phS: prev.speed || '', phI: prev.incline || '', phC: prev.cal || '' };
-        return { weight: '', reps: '', rpe: '', done: false, phRPE: rpePre,
-          phW: (pl && pl.mid ? String(pl.mid) : '') || load || prev.weight || '',
-          phR: /^\d+$/.test(it.reps) ? it.reps : '' };
-      })
+    if (warm) it.warm = true;
+    const sets = Array.from({ length: n }, (_, i) => {
+      const prev = lastWork.length ? lastWork[Math.min(i, lastWork.length - 1)] : {};
+      if (cardioKind(it.name)) return { speed: '', incline: '', cal: '', rpe: '', done: false, phRPE: rpePre, phS: prev.speed || '', phI: prev.incline || '', phC: prev.cal || '' };
+      return { weight: '', reps: '', rpe: '', done: false, phRPE: rpePre,
+        phW: (pl && pl.mid ? String(pl.mid) : '') || load || prev.weight || '',
+        phR: /^\d+$/.test(it.reps) ? it.reps : '' };
     });
+    if (warm) {
+      const work = num(sets[0].phW);
+      sets.unshift({ warm: true, weight: '', reps: '', rpe: '', done: false, phRPE: '',
+        phW: (lastWarm && lastWarm.weight) || (work ? String(round5(work * 0.5)) : ''), phR: sets[0].phR });
+    }
+    exercises.push({ name: it.name, section, rx: { ...it }, sets });
     section = '';
   }
   S.session = { id: newId(), workoutId: w.id, name: w.name, focus: w.focus || '', start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
@@ -1510,7 +1523,7 @@ function openFinish() {
       mins: Math.max(1, Math.round((Date.now() - s.start) / 60000)), rpe, notes: $('#fnotes').value.trim(),
       exercises: s.exercises.map(e => ({ name: e.name, sets: e.sets.map(x => {
         const o = {}; setCols(e.name).forEach(([k, , ph]) => { o[k] = x[k] || x[ph] || ''; });
-        return { ...o, rpe: x.rpe || '', done: !!x.done };
+        return { ...o, rpe: x.rpe || '', done: !!x.done, ...(x.warm ? { warm: true } : {}) };
       }) }))
     };
     if (!(S.db && S.uid)) log._local = true;
@@ -1611,7 +1624,9 @@ document.addEventListener('click', async ev => {
       } catch (e) { toast('Could not load it. Check that your email is set as coach.'); }
       break;
     }
-    case 'newprog': S.pedit = { id: null, name: '', weeks: 6, days: PAD7([]), phases: [], main: [], presetWorkouts: [], skipSections: [] }; render(); window.scrollTo(0, 0); break;
+    case 'newprog': S.pedit = { id: null, name: '', weeks: 6, days: PAD7([]), phases: [], main: [], presetWorkouts: [], skipSections: [], warmup: [] }; render(); window.scrollTo(0, 0); break;
+    case 'wuall': S.pedit.warmup = [...document.querySelectorAll('[data-cwu]')].map(x => x.dataset.cwu); render(); break;
+    case 'wunone': S.pedit.warmup = []; render(); break;
     case 'editprog': S.pedit = progEditFrom(S.programs.find(p => p.id === id)); render(); window.scrollTo(0, 0); break;
     case 'dupprog': S.pedit = progEditFrom(S.programs.find(p => p.id === id), true); render(); window.scrollTo(0, 0); break;
     case 'viewprog': S.previewProg = id; S.tab = 'program'; render(); window.scrollTo(0, 0); break;
@@ -1649,7 +1664,7 @@ document.addEventListener('click', async ev => {
       }).sort((a, b) => a.from - b.from);
       const pr = { id: e.id || 'p' + newId(), name: e.name.trim(), weeks, days, phases,
         main: e.main.filter(n => names.has(n)), presetWorkouts: e.presetWorkouts.filter(id => allIds.includes(id)),
-        skipSections: e.skipSections, updated: Date.now() };
+        skipSections: e.skipSections, warmup: (e.warmup || []).filter(n => names.has(n)), updated: Date.now() };
       if (await store.saveProgram(pr)) { S.pedit = null; render(); toast('Program saved.'); }
       break;
     }
@@ -1733,6 +1748,7 @@ document.addEventListener('change', ev => {
   if (t.dataset.cm !== undefined) tog(S.pedit.main, t.dataset.cm, t.checked);
   if (t.dataset.cw !== undefined) tog(S.pedit.presetWorkouts, t.dataset.cw, t.checked);
   if (t.dataset.cs !== undefined) tog(S.pedit.skipSections, t.dataset.cs, t.checked);
+  if (t.dataset.cwu !== undefined) tog(S.pedit.warmup || (S.pedit.warmup = []), t.dataset.cwu, t.checked);
 });
 
 /* ---------- boot ---------- */
