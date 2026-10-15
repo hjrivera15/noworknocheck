@@ -375,6 +375,10 @@ h2.h{font:800 1.6rem var(--display);margin:22px 0 8px}
 .fmine{display:flex;align-items:center;gap:8px}
 .fmine .fitem{flex:1}
 .fprev{font:700 1.15rem var(--display);margin:10px 0 0}
+.fports{display:flex;flex-wrap:wrap;gap:6px}
+.fsub{font:800 1.05rem var(--display);margin:14px 0 2px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.fports .btn small{font-weight:500;opacity:.75;margin-left:4px}
+.fports .btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .fchk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600}
 .fchk input{width:18px;height:18px}
 .fsug{margin-top:10px}
@@ -458,10 +462,10 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 /* App version: bump this AND the number in sw.js VERSION (nwnc-vN) on every upload */
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 document.querySelectorAll('.appver').forEach(p => { p.textContent = 'Version ' + APP_VERSION; });
 const S = {
-  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], macros: {}, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
+  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], teamfoods: [], macros: {}, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
   db: null, uid: null, canLib: false, filter: '', openLog: null, rest: null
 };
 
@@ -828,6 +832,7 @@ function maybeMsgPopup() {
    get a new free key at api.data.gov/signup. */
 const FOOD_USERS = ['rylanrivera27@gmail.com', 'hjrivera1534@gmail.com'];
 const USDA_KEY = 'O5Dw9reV4HZ62zrMLpft5UaYotvVzTaMgoCplh54'; // coach's free api.data.gov key (1,000 searches/hour; not secret)
+const FAST_TIP = '<p class="note">Restaurant not listed (like Chipotle)? Look up its nutrition info on the restaurant\'s website, then use <b>Quick add</b>, or save it in <b>My foods</b> to reuse.</p>';
 const MEALS = [['b', 'Breakfast'], ['l', 'Lunch'], ['d', 'Dinner'], ['s', 'Snacks']];
 const MACROS = [['kcal', 'Calories', ''], ['p', 'Protein', 'g'], ['c', 'Carbs', 'g'], ['f', 'Fat', 'g']];
 const foodOn = () => !!S.db && FOOD_USERS.includes(S.email);
@@ -839,7 +844,11 @@ const r0 = v => Math.round(v);
 const macLine = m => `${r0(m.kcal)} cal · ${r0(m.p)}P ${r0(m.c)}C ${r0(m.f)}F`;
 const addDays = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); return isoDate(new Date(y, m - 1, d + n)); };
 const dayItems = (iso, src = S) => ((src.foods || {})[iso] || {}).items || [];
-const amtTxt = it => it.unit === 'g' ? `${r0(num(it.amt))} g` : it.sdesc ? `${+num(it.amt).toFixed(2)} × ${it.sdesc}` : '';
+/* weights are stored in grams (ml for drinks) but shown and typed in ounces */
+const ozF = it => it && it.liq ? 29.5735 : 28.3495;
+const ozU = it => it && it.liq ? 'fl oz' : 'oz';
+const toOz = (g, it) => +(num(g) / ozF(it)).toFixed(1);
+const amtTxt = it => it.unit === 'g' ? `${toOz(it.amt, it)} ${ozU(it)}` : it.sdesc ? `${+num(it.amt).toFixed(2)} × ${it.sdesc}` : '';
 function saveFoodDay(iso, items) {
   const doc = { kind: 'food', id: 'food-' + iso, date: iso, items, updated: Date.now() };
   S.foods = { ...(S.foods || {}), [iso]: doc };
@@ -898,29 +907,32 @@ function renderFoodSheet() {
         <div class="row" style="gap:8px;margin-top:8px"><select id="ftgoal" class="inp" style="max-width:160px">${[['bulk', 'Bulk (gain)'], ['maintain', 'Maintain'], ['cut', 'Cut (lose)']].map(([v, l]) => `<option value="${v}" ${t.goal === v ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="btn ghost small" data-act="ftsuggest">Suggest</button></div></details>
       <div class="row" style="justify-content:space-between;margin-top:16px"><button class="btn ghost" data-act="fclose">Cancel</button><button class="btn go" data-act="ftsave">Save targets</button></div>`;
   } else if (fs.mode === 'amount') {
-    const p = fs.pick, g = p.unit === 'g';
+    const p = fs.pick, g = p.unit === 'g', ports = g ? (p.portions || []) : [];
     body = `<h2>${esc(p.name)}</h2>${p.brand ? `<p class="note" style="margin-top:0">${esc(p.brand)}</p>` : ''}
-      <label class="f" for="famt">${g ? 'Amount (grams)' : `Servings (1 = ${esc(p.sdesc || 'serving')})`}</label><input class="inp" id="famt" inputmode="decimal" value="${esc(String(fs.amt))}">
-      ${g && p.serv ? `<div class="row" style="gap:6px;margin-top:6px">${[0.5, 1, 2].map(x => `<button class="btn ghost small" data-act="fserv" data-x="${x}">${x === 1 ? '1 serving' : x + ' servings'} (${r0(p.serv.g * x)} ${p.serv.u || 'g'})</button>`).join('')}</div>` : ''}
-      <p class="fprev" id="fprev">${macLine(itemMac({ ...p, amt: fs.amt }))}</p>${mealSel}
+      ${ports.length ? `<label class="f">Pick a serving</label><div class="fports">${ports.map(x => `<button class="btn ghost small" data-act="fserv" data-g="${x.g}" aria-pressed="${Math.abs(toOz(x.g, p) - num(fs.amt)) < 0.05}">${esc(x.label)} <small>${toOz(x.g, p)} ${ozU(p)}</small></button>`).join('')}</div>` : g && p.loadingPortions ? '<p class="note">Loading serving sizes…</p>' : ''}
+      <label class="f" for="famt">${g ? `${ports.length ? 'Or type the amount' : 'Amount'} (${ozU(p)})` : `Servings (1 = ${esc(p.sdesc || 'serving')})`}</label><input class="inp" id="famt" inputmode="decimal" value="${esc(String(fs.amt))}">
+      <p class="fprev" id="fprev">${macLine(itemMac({ ...p, amt: g ? num(fs.amt) * ozF(p) : num(fs.amt) }))}</p>${mealSel}
       ${g && !fs.edit ? `<label class="fchk"><input type="checkbox" id="fsave2"> Save to My foods</label>` : ''}
       <div class="row" style="justify-content:space-between;margin-top:16px">${fs.edit ? '<button class="btn ghost" data-act="fdel">Remove</button>' : '<button class="btn ghost" data-act="fback">Back</button>'}<button class="btn go" data-act="fok">${fs.edit ? 'Save' : 'Add'}</button></div>`;
   } else {
-    const tabs = `<div class="mode" role="group" aria-label="Add food by">${[['search', 'Search'], ['mine', 'My foods'], ['quick', 'Quick add']].map(([m, l]) => `<button data-act="fmode" data-m="${m}" aria-pressed="${fs.mode === m || (m === 'mine' && fs.mode === 'newfood')}">${l}</button>`).join('')}</div>`;
+    const tabs = `<div class="mode" role="group" aria-label="Add food by">${[['search', 'Search'], ['mine', 'Saved'], ['quick', 'Quick add']].map(([m, l]) => `<button data-act="fmode" data-m="${m}" aria-pressed="${fs.mode === m || (m === 'mine' && fs.mode === 'newfood')}">${l}</button>`).join('')}</div>`;
     if (fs.mode === 'search') {
       body = `<h2>Add food</h2>${tabs}<form id="fsform" class="row" style="gap:8px;margin-top:10px"><input class="inp" id="fsq" type="search" placeholder="e.g. chicken breast, oatmeal, Quest bar" value="${esc(fs.q)}" style="flex:1"><button class="btn go" type="submit">Search</button></form>
-        ${fs.busy ? '<p class="note">Searching…</p>' : fs.err ? `<p class="note bad">${esc(fs.err)}</p>` : fs.results ? (fs.results.length ? `<div class="fres">${fs.results.map((r, i) => `<button class="fitem" data-act="fpick" data-i="${i}"><span class="fn">${esc(r.name)}${r.brand ? ` <small>${esc(r.brand)}</small>` : ''}</span><span class="fa">${r.serv ? `${esc(r.serv.label)}: ${macLine(itemMac({ per: r.per, amt: r.serv.g }))}` : `100 g: ${macLine(itemMac({ per: r.per, amt: 100 }))}`}</span></button>`).join('')}</div>` : '<p class="note">Nothing found. Try fewer words, or use Quick add.</p>') : '<p class="note">Searches the USDA food database: basics like chicken or rice, plus packaged brands.</p>'}`;
+        ${(() => { const tm = fs.results || fs.err ? teamMatch(fs.q) : []; return tm.length ? `<h3 class="fsub">Team foods</h3><div class="fres">${tm.map(teamRow).join('')}</div><h3 class="fsub">Food database</h3>` : ''; })()}
+        ${fs.busy ? '<p class="note">Searching…</p>' : fs.err ? `<p class="note bad">${esc(fs.err)}</p>` : fs.results ? (fs.results.length ? `<div class="fres">${fs.results.map((r, i) => `<button class="fitem" data-act="fpick" data-i="${i}"><span class="fn">${esc(r.name)}${r.brand ? ` <small>${esc(r.brand)}</small>` : ''}</span><span class="fa">${r.serv ? `${esc(r.serv.label)} (${toOz(r.serv.g, r)} ${ozU(r)}): ${macLine(itemMac({ per: r.per, amt: r.serv.g }))}` : `4 oz: ${macLine(itemMac({ per: r.per, amt: 4 * ozF(r) }))}`}</span></button>`).join('')}</div>${FAST_TIP}` : `<p class="note">Nothing found. Try fewer words, or use Quick add.</p>${FAST_TIP}`) : '<p class="note">Searches the USDA food database: basics like chicken or rice, packaged brands, and menus from big chains like McDonald\'s, Chick-fil-A, Taco Bell, Wendy\'s, KFC and Subway.</p>'}`;
     } else if (fs.mode === 'mine') {
-      const mf = [...(S.myfoods || [])].sort((a, b) => a.name.localeCompare(b.name));
-      body = `<h2>Add food</h2>${tabs}${mf.length ? `<div class="fres">${mf.map(f => `<div class="fmine"><button class="fitem" data-act="fpickmine" data-id="${f.id}"><span class="fn">${esc(f.name)}</span><span class="fa">${esc(f.serving || '1 serving')}: ${macLine({ ...f.per, kcal: kcalOf(f.per) })}</span></button><button class="link" data-act="fdelmine" data-id="${f.id}" aria-label="Delete ${esc(f.name)}">✕</button></div>`).join('')}</div>` : '<p class="note">No saved foods yet. Save foods you eat often and add them in one tap.</p>'}
-        <button class="btn ghost wide" data-act="fmode" data-m="newfood" style="margin-top:10px">+ New food</button>`;
+      const byName = (a, b) => a.name.localeCompare(b.name), mf = [...(S.myfoods || [])].sort(byName), tf = [...(S.teamfoods || [])].sort(byName);
+      body = `<h2>Add food</h2>${tabs}<button class="btn ghost wide" data-act="fmode" data-m="newfood" style="margin-top:10px">+ New food</button>
+        <h3 class="fsub">My foods</h3>${mf.length ? `<div class="fres">${mf.map(f => `<div class="fmine"><button class="fitem" data-act="fpickmine" data-id="${f.id}"><span class="fn">${esc(f.name)}</span><span class="fa">${esc(f.serving || '1 serving')}: ${macLine({ ...f.per, kcal: kcalOf(f.per) })}</span></button><button class="link" data-act="fdelmine" data-id="${f.id}" aria-label="Delete ${esc(f.name)}">✕</button></div>`).join('')}</div>` : '<p class="note">Only you see these. Save foods you eat often and add them in one tap.</p>'}
+        <h3 class="fsub">Team foods</h3>${tf.length ? `<div class="fres">${tf.map(teamRow).join('')}</div>` : '<p class="note">Foods anyone on the team shares show up here and in Search, like restaurant meals that aren\'t in the database.</p>'}`;
     } else if (fs.mode === 'newfood' || fs.mode === 'quick') {
       const nf = fs.mode === 'newfood';
       body = `<h2>${nf ? 'New food' : 'Add food'}</h2>${tabs}
         <label class="f" for="fqn">Name${nf ? '' : ' (optional)'}</label><input class="inp" id="fqn" placeholder="${nf ? 'e.g. Mom\'s burrito' : 'Quick add'}">
-        ${nf ? '<label class="f" for="fqs">Serving size</label><input class="inp" id="fqs" placeholder="e.g. 1 burrito, 6 oz, 1 cup">' : ''}
+        ${nf ? `<label class="f" for="fqb">Restaurant or brand (optional)</label><input class="inp" id="fqb" placeholder="e.g. Chipotle">
+          <label class="f" for="fqs">Serving size</label><input class="inp" id="fqs" placeholder="e.g. 1 bowl, 1 burrito, 6 oz">` : ''}
         <div class="fgrid">${[['p', 'Protein (g)'], ['c', 'Carbs (g)'], ['f', 'Fat (g)'], ['kcal', 'Calories']].map(([k, l]) => `<label>${l}<input class="inp" inputmode="decimal" id="fq-${k}" placeholder="${k === 'kcal' ? 'auto' : '0'}"></label>`).join('')}</div>
-        ${nf ? '' : mealSel}<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn go" data-act="${nf ? 'fnewsave' : 'fquick'}">${nf ? 'Save food' : 'Add'}</button></div>`;
+        ${nf ? `<label class="fchk"><input type="checkbox" id="fqshare" checked> Share with the team</label><p class="note" style="margin:4px 0 0">Shared foods show up in everyone's search. Tip: copy the numbers from the restaurant's nutrition page.</p>` : mealSel}<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn go" data-act="${nf ? 'fnewsave' : 'fquick'}">${nf ? 'Save food' : 'Add'}</button></div>`;
     }
     body += `<div class="row" style="margin-top:12px"><button class="link" data-act="fclose">Close</button></div>`;
   }
@@ -943,15 +955,34 @@ async function foodSearch(q) {
       if (p == null && c == null && fat == null) return null;
       const per = { p: num(p) / 100, c: num(c) / 100, f: num(fat) / 100, kcal: kcal != null ? kcal / 100 : null };
       const sg = /^(g|grm|ml|mlt)$/i.test(f.servingSizeUnit || '') && num(f.servingSize) > 0 ? num(f.servingSize) : 0;
-      return { name: nice(f.description || 'Food'), brand: f.brandName || f.brandOwner ? nice(f.brandName || f.brandOwner) : '', unit: 'g', per,
-        serv: sg ? { g: sg, u: /^m/i.test(f.servingSizeUnit) ? 'ml' : 'g', label: `${f.householdServingFullText ? f.householdServingFullText + ' (' : ''}${r0(sg)} ${/^m/i.test(f.servingSizeUnit) ? 'ml' : 'g'}${f.householdServingFullText ? ')' : ''}` } : null };
+      const liq = sg > 0 && /^m/i.test(f.servingSizeUnit);
+      return { id: f.fdcId, name: nice(f.description || 'Food'), brand: f.brandName || f.brandOwner ? nice(f.brandName || f.brandOwner) : '', unit: 'g', per, ...(liq ? { liq: true } : {}),
+        serv: sg ? { g: sg, label: f.householdServingFullText ? nice(f.householdServingFullText) : '1 serving' } : null };
     }).filter(Boolean);
   } catch (e) { fs.err = e.message || 'Search failed.'; }
   fs.busy = false; if (S.fs === fs) renderFoodSheet();
 }
 function foodPreview() {
   const fs = S.fs, el = $('#fprev'); if (!fs || !el) return;
-  el.textContent = macLine(itemMac({ ...fs.pick, amt: num(fs.amt) }));
+  el.textContent = macLine(itemMac({ ...fs.pick, amt: fs.pick.unit === 'g' ? num(fs.amt) * ozF(fs.pick) : num(fs.amt) }));
+  document.querySelectorAll('[data-act=fserv]').forEach(b => b.setAttribute('aria-pressed', Math.abs(toOz(b.dataset.g, fs.pick) - num(fs.amt)) < 0.05));
+}
+/* USDA lists real serving sizes ("1 item", "medium serving", "1 cup") only on each food's own page */
+async function loadPortions(r) {
+  let ports = [];
+  try {
+    const res = await fetch(`https://api.nal.usda.gov/fdc/v1/food/${r.id}?api_key=${USDA_KEY}`);
+    if (res.ok) ports = ((await res.json()).foodPortions || []).filter(x => num(x.gramWeight) > 0).map(x => {
+      const unit = x.measureUnit && x.measureUnit.name && x.measureUnit.name !== 'undetermined' ? x.measureUnit.name : '';
+      const desc = String(x.modifier || x.portionDescription || '').replace(/\(?\b\d+(\.\d+)?\s*(oz|g|grams?)\b\)?/gi, ''); // our own oz is shown next to it
+      return { label: `${+num(x.amount || 1).toFixed(2)} ${[unit, desc].filter(Boolean).join(' ')}`.replace(/\s+/g, ' ').trim(), g: num(x.gramWeight) };
+    });
+  } catch (e) {}
+  const fs = S.fs; if (!fs || fs.pick !== r) return;
+  r.loadingPortions = false; r.portions = ports;
+  const best = ports.find(x => /medium/i.test(x.label)) || ports.find(x => /\b(item|serving|sandwich|burrito|slice|piece|large|breast|patty)\b/i.test(x.label));
+  if (best && num(fs.amt) === toOz(4 * ozF(r), r)) fs.amt = toOz(best.g, r);
+  renderFoodSheet();
 }
 async function foodAct(a, t) {
   const fs = S.fs, today = isoDate(new Date()), iso = S.fdate || today;
@@ -964,17 +995,24 @@ async function foodAct(a, t) {
     case 'fclose': closeFoodSheet(); return true;
     case 'fmode': Object.assign(fs, { mode: t.dataset.m }); renderFoodSheet(); return true;
     case 'fback': fs.mode = fs.from || 'search'; renderFoodSheet(); return true;
-    case 'fpick': { const r = fs.results[+t.dataset.i]; Object.assign(fs, { mode: 'amount', from: 'search', pick: r, amt: r.serv ? r0(r.serv.g) : 100 }); renderFoodSheet(); return true; }
+    case 'fpick': {
+      const r = { ...fs.results[+t.dataset.i] };
+      if (r.serv) r.portions = [0.5, 1, 2].map(x => ({ label: x === 1 ? r.serv.label : `${x} × ${r.serv.label}`, g: r.serv.g * x }));
+      else r.loadingPortions = true;
+      Object.assign(fs, { mode: 'amount', from: 'search', pick: r, amt: toOz(r.serv ? r.serv.g : 4 * ozF(r), r) }); renderFoodSheet();
+      if (!r.serv) loadPortions(r);
+      return true;
+    }
     case 'fpickmine': { const f = (S.myfoods || []).find(x => x.id === t.dataset.id); Object.assign(fs, { mode: 'amount', from: 'mine', pick: { name: f.name, unit: 'srv', sdesc: f.serving || '1 serving', per: f.per, mf: f.id }, amt: 1 }); renderFoodSheet(); return true; }
-    case 'fserv': fs.amt = r0(fs.pick.serv.g * num(t.dataset.x)); renderFoodSheet(); return true;
-    case 'fedit': { const it = dayItems(iso).find(x => x.id === t.dataset.id); if (!it) return true; openFoodSheet({ mode: 'amount', meal: it.meal, pick: it, amt: it.amt, edit: it.id }); return true; }
+    case 'fserv': fs.amt = toOz(t.dataset.g, fs.pick); renderFoodSheet(); return true;
+    case 'fedit': { const it = dayItems(iso).find(x => x.id === t.dataset.id); if (!it) return true; openFoodSheet({ mode: 'amount', meal: it.meal, pick: it, amt: it.unit === 'g' ? toOz(it.amt, it) : it.amt, edit: it.id }); return true; }
     case 'fok': {
-      const amt = num(val('famt')); if (amt <= 0) { toast('Enter an amount.'); return true; }
-      const meal = val('fmeal') || fs.meal, p = fs.pick;
-      const item = { id: fs.edit || newId(), meal, name: p.name, unit: p.unit, amt, per: p.per, ...(p.brand ? { brand: p.brand } : {}), ...(p.sdesc ? { sdesc: p.sdesc } : {}) };
+      const p = fs.pick, typed = num(val('famt')); if (typed <= 0) { toast('Enter an amount.'); return true; }
+      const amt = p.unit === 'g' ? typed * ozF(p) : typed, meal = val('fmeal') || fs.meal; // weights saved in grams
+      const item = { id: fs.edit || newId(), meal, name: p.name, unit: p.unit, amt, per: p.per, ...(p.brand ? { brand: p.brand } : {}), ...(p.sdesc ? { sdesc: p.sdesc } : {}), ...(p.liq ? { liq: true } : {}) };
       const items = fs.edit ? dayItems(iso).map(x => x.id === fs.edit ? item : x) : [...dayItems(iso), item];
       saveFoodDay(iso, items);
-      if ($('#fsave2') && $('#fsave2').checked) saveMyFood({ name: p.name, serving: `${r0(amt)} g`, per: { p: p.per.p * amt, c: p.per.c * amt, f: p.per.f * amt, kcal: kcalOf(p.per) * amt } });
+      if ($('#fsave2') && $('#fsave2').checked) saveMyFood({ name: p.name, serving: `${toOz(amt, p)} ${ozU(p)}`, per: { p: p.per.p * amt, c: p.per.c * amt, f: p.per.f * amt, kcal: kcalOf(p.per) * amt } });
       closeFoodSheet(); render(); return true;
     }
     case 'fdel': saveFoodDay(iso, dayItems(iso).filter(x => x.id !== fs.edit)); closeFoodSheet(); render(); return true;
@@ -983,11 +1021,18 @@ async function foodAct(a, t) {
       if (!per.kcal) { toast('Enter some numbers first.'); return true; }
       if (a === 'fnewsave') {
         if (!val('fqn').trim()) { toast('Give the food a name.'); return true; }
-        saveMyFood({ name: val('fqn').trim(), serving: val('fqs').trim() || '1 serving', per }); fs.mode = 'mine'; renderFoodSheet(); toast('Saved to My foods.'); return true;
+        const f = { name: val('fqn').trim(), brand: val('fqb').trim(), serving: val('fqs').trim() || '1 serving', per };
+        if ($('#fqshare') && $('#fqshare').checked) { if (!(await saveTeamFood(f))) return true; toast('Saved for the whole team.'); }
+        else { saveMyFood(f); toast('Saved to My foods.'); }
+        fs.mode = 'mine'; renderFoodSheet(); return true;
       }
       saveFoodDay(iso, [...dayItems(iso), { id: newId(), meal: val('fmeal') || fs.meal, name: val('fqn').trim() || 'Quick add', unit: 'srv', amt: 1, per }]);
       closeFoodSheet(); render(); return true;
     }
+    case 'fpickteam': { const f = (S.teamfoods || []).find(x => x.id === t.dataset.id); if (!f) return true;
+      Object.assign(fs, { mode: 'amount', from: fs.mode, pick: { name: f.name, ...(f.brand ? { brand: f.brand } : {}), unit: 'srv', sdesc: f.serving || '1 serving', per: f.per }, amt: 1 }); renderFoodSheet(); return true; }
+    case 'fdelteam': { const f = (S.teamfoods || []).find(x => x.id === t.dataset.id); if (!f || !(await ask(`Remove “${f.name}” from the team list? Nobody will be able to search for it anymore. Food already logged stays.`, 'Remove'))) { renderFoodSheet(); return true; }
+      try { await FS.collection('teamfoods').doc(f.id).delete(); S.teamfoods = S.teamfoods.filter(x => x.id !== f.id); } catch (e) { toast('Couldn\'t remove it. Check your connection.'); } renderFoodSheet(); return true; }
     case 'fdelmine': { const f = (S.myfoods || []).find(x => x.id === t.dataset.id); if (!f || !(await ask(`Delete “${f.name}” from My foods?`, 'Delete'))) { renderFoodSheet(); return true; }
       S.myfoods = S.myfoods.filter(x => x.id !== f.id); Promise.resolve(S.db.collection('users/' + S.uid + '/data').doc(f.id).delete()).catch(() => {}); renderFoodSheet(); return true; }
     case 'fcopyday': saveFoodDay(iso, dayItems(addDays(iso, -1)).map(x => ({ ...x, id: newId() }))); render(); return true;
@@ -1007,6 +1052,15 @@ async function foodAct(a, t) {
   }
   return false;
 }
+/* team foods: teamfoods/{id} {id, name, brand?, serving, per (one serving), by (uid), byName, created}; everyone on the team can search them */
+async function saveTeamFood(f) {
+  const doc = { id: 'tf-' + newId(), name: f.name, ...(f.brand ? { brand: f.brand } : {}), serving: f.serving, per: f.per, by: S.uid, byName: $('#who2').textContent || '', created: Date.now() };
+  try { await FS.collection('teamfoods').doc(doc.id).set(doc); S.teamfoods = [...(S.teamfoods || []).filter(x => x.id !== doc.id), doc]; return true; }
+  catch (e) { toast('Couldn\'t share it. Check your connection.'); return false; }
+}
+const canDelTeam = f => S.canLib || f.by === S.uid;
+const teamMatch = q => { const words = String(q || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return words.length ? (S.teamfoods || []).filter(f => { const hay = `${f.name} ${f.brand || ''}`.toLowerCase(); return words.every(w => hay.includes(w)); }) : []; };
+const teamRow = f => `<div class="fmine"><button class="fitem" data-act="fpickteam" data-id="${f.id}"><span class="fn">${esc(f.name)}${f.brand ? ` <small>${esc(f.brand)}</small>` : ''}</span><span class="fa">${esc(f.serving || '1 serving')}: ${macLine({ ...f.per, kcal: kcalOf(f.per) })}${f.byName ? ` · added by ${esc(f.byName)}` : ''}</span></button>${canDelTeam(f) ? `<button class="link" data-act="fdelteam" data-id="${f.id}" aria-label="Remove ${esc(f.name)} from the team list">✕</button>` : ''}</div>`;
 function saveMyFood(f) {
   const doc = { kind: 'myfood', id: 'mf-' + newId(), name: f.name, serving: f.serving, per: f.per, updated: Date.now() };
   S.myfoods = [...(S.myfoods || []), doc];
@@ -2248,6 +2302,8 @@ function startData(u) {
   S.msgs = []; S.mread = {}; S.mthread = null; S.msgPopped = false; msgLoaded = {};
   const msgsIn = {};
   const onMsgs = key => snap => { msgsIn[key] = snap.docs.map(d => d.data()); S.msgs = Object.values(msgsIn).flat().sort((a, b) => a.date - b.date); msgLoaded[key] = true; render(); maybeMsgPopup(); };
+  S.teamfoods = [];
+  if (foodOn()) on(FS.collection('teamfoods'), snap => { S.teamfoods = snap.docs.map(d => d.data()); if (S.fs && S.fs.mode === 'mine') renderFoodSheet(); });
   if (S.canLib) on(FS.collection('msgs').orderBy('date', 'desc').limit(500), onMsgs('coach'));
   else { on(FS.collection('msgs').where('uid', '==', u.uid), onMsgs('mine')); on(FS.collection('msgs').where('uid', '==', 'all'), onMsgs('all')); }
   on(FS.collection('users/' + u.uid + '/data'), snap => {
