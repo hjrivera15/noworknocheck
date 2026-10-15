@@ -776,6 +776,25 @@ function maybeMsgPopup() {
     <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" data-act="mlater">Later</button><button class="btn go" data-act="mgo">Open Messages</button></div></div></div>`;
 }
 
+/* ---------- keep the screen on during a workout ----------
+   Screen Wake Lock is held while a workout is in progress. Phones drop it whenever the app is hidden,
+   so it's asked for again when the app comes back. Unsupported phones just sleep as usual. */
+let wakeLock = null, wakeAsking = false;
+async function syncWake() {
+  if (!('wakeLock' in navigator) || wakeAsking) return;
+  const want = !!S.session && !document.hidden;
+  if (want && !wakeLock) {
+    wakeAsking = true;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; if (S.tab === 'session') render(); });
+      if (S.tab === 'session') render();
+    } catch (e) { wakeLock = null; }
+    wakeAsking = false;
+  } else if (!want && wakeLock) { const l = wakeLock; wakeLock = null; try { await l.release(); } catch (e) {} }
+}
+document.addEventListener('visibilitychange', syncWake);
+
 /* ---------- render ---------- */
 function renderTabs() {
   const tabs = [['week', 'Week'], ['program', 'Program'], ['history', 'History'], ['profile', 'Profile']];
@@ -1103,7 +1122,7 @@ function viewSession() {
   const s = S.session; if (!s) return '';
   const wo = S.lib.find(x => x.id === s.workoutId), focus = (wo && wo.focus) || s.focus || '';
   const pi = progInfo(), ph = pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.phase : null;
-  let html = `<div class="sess-head"><h2>${esc(s.name)}</h2></div>`;
+  let html = `<div class="sess-head"><h2>${esc(s.name)}</h2></div>${wakeLock ? '<p class="note" style="margin:-4px 0 10px">🔆 Screen stays on until you finish.</p>' : ''}`;
   const cn = S.cnotes[s.workoutId] || {};
   if (cn.text) html += `<div class="coachmsg mine"><span class="cl">Just for you · from your coach</span>${linkify(cn.text)}</div>`;
   if (focus) html += `<div class="coachmsg"><span class="cl">From your coach</span>${linkify(focus)}</div>`;
@@ -1554,6 +1573,7 @@ function render() {
   $('#main').innerHTML = v;
   if (ta && $('#mtext')) { const m = $('#mtext'); m.focus(); m.setSelectionRange(ta[0], ta[1]); }
   renderDock();
+  syncWake();
 }
 
 /* ---------- session ---------- */
