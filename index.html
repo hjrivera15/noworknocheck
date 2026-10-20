@@ -163,6 +163,13 @@ table.sets{width:100%;border-collapse:collapse}
 table.sets th{font:600 .8rem var(--body);color:var(--muted);text-align:center;padding:4px}
 table.sets td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}
 table.sets td.n{font:700 1.3rem var(--display);width:40px;color:var(--muted)}
+table.sets td.n .lst{display:block;font:700 .72rem var(--body);color:var(--ink);opacity:.75;line-height:1.15;margin-top:2px;max-width:58px;overflow-wrap:anywhere}
+table.sets td.n .lst i{display:block;font-style:normal;font-size:.6rem;letter-spacing:.04em;text-transform:uppercase;opacity:.8}
+.mynote{margin-top:6px;padding:6px 10px;border-radius:4px;background:color-mix(in srgb,var(--ok) 12%,transparent);border-left:4px solid var(--ok);font-size:.92rem;white-space:pre-wrap}
+.mynote b{font:700 .75rem var(--body);letter-spacing:.05em;text-transform:uppercase;margin-right:4px}
+.mynote .link{margin-left:6px}
+.mynote-ed textarea{width:100%;min-height:64px;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--field);color:var(--ink);font:400 1rem var(--body)}
+.mynote-ed .row{justify-content:flex-end;gap:8px;margin-top:6px}
 table.sets tr.warm td.n{color:var(--plate)}
 table.sets tr.warm input{border-style:dashed}
 table.sets.wide th{font-size:.7rem;padding:4px 1px}
@@ -462,7 +469,7 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 /* App version: bump this AND the number in sw.js VERSION (nwnc-vN) on every upload */
-const APP_VERSION = 12;
+const APP_VERSION = 13;
 document.querySelectorAll('.appver').forEach(p => { p.textContent = 'Version ' + APP_VERSION; });
 const S = {
   openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], teamfoods: [], macros: {}, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
@@ -680,6 +687,8 @@ const setTxt = x => {
   const main = parts.length ? parts.join(' · ') : `${x.weight || 'BW'}×${x.reps || '—'}`;
   return (x.warm ? 'W ' : '') + main + (x.rpe ? ' @' + x.rpe : '');
 };
+/* short per-set "last time" text for the set table: no RPE, no warm-up prefix */
+const lastTxt = x => setTxt({ ...x, rpe: '', warm: false });
 /* program.warmup = exercise names that get one lighter warm-up set (set "W") before the working sets */
 const hasWarm = (p, n) => !!p && !cardioKind(n) && !RUN_RE.test(n) && (p.warmup || []).some(m => m.toLowerCase() === String(n || '').toLowerCase());
 
@@ -1428,15 +1437,24 @@ function viewSession() {
   s.exercises.forEach((ex, ei) => {
     if (ex.section) html += `<div class="sec-label">${esc(ex.section)}</div>`;
     const last = lastFor(ex.name), cols = setCols(ex);
+    const lastWork = last ? last.sets.filter(x => !x.warm) : [], lastWarm = last ? last.sets.find(x => x.warm) : null;
+    const warmOff = ex.sets[0] && ex.sets[0].warm ? 1 : 0;
+    const lastCell = (st, si) => { if (!last) return ''; const p = st.warm ? lastWarm : lastWork[si - warmOff]; if (!p) return ''; const cardio = p.speed || p.incline || p.dist || p.time || p.cal; return `<span class="lst"><i>last</i>${cardio ? esc(lastTxt(p)) : `${esc(p.weight || 'BW')}<br>×${esc(p.reps || '—')}`}</span>`; };
+    const mk = exKey(ex.name), saved = (S.mynotes || {})[mk], canNote = !!(S.db && S.uid);
+    const noteHtml = !canNote ? '' : ex.mnEdit
+      ? `<div class="mynote-ed"><textarea data-mn="${ei}" aria-label="My note for ${esc(ex.name)}" placeholder="e.g. Seat on notch 4. Go 135 next time.">${esc(ex.mnDraft ?? ((saved && saved.text) || ''))}</textarea><div class="row"><button class="btn ghost small" data-act="mncancel" data-ei="${ei}">Cancel</button><button class="btn go small" data-act="mnsave" data-ei="${ei}">Save note</button></div></div>`
+      : saved && saved.text ? `<div class="mynote"><b>My note</b>${linkify(saved.text)}<button class="link" data-act="mnedit" data-ei="${ei}">Edit</button></div>`
+      : `<button class="link" style="margin-top:6px" data-act="mnedit" data-ei="${ei}">＋ Add my note</button>`;
     html += `<section class="ex"><div class="ex-h"><h3>${esc(ex.name)}${infoBtn(ex.name)}</h3>
       <div class="rx">${esc(rxText(ex.rx))}${ex.rx.pctInfo ? ` <span class="pctw">${esc(ex.rx.pctInfo)}</span>` : ''}${ex.rx.rpeT ? ' · RPE ' + esc(ex.rx.rpeT) : ''}</div>
       ${ex.rx.notes ? `<div class="cue">${esc(ex.rx.notes)}</div>` : ''}
       ${((S.cnotes[s.workoutId] || {}).ex || {})[exKey(ex.name)] ? `<div class="cue2"><b>For you</b>${linkify(S.cnotes[s.workoutId].ex[exKey(ex.name)])}</div>` : ''}
       ${last ? `<div class="last"><span class="lt">Last time · ${shortDate(last.date)}</span><b>${last.sets.map(x => setTxt(x)).join(', ')}</b></div>` : '<div class="first">First time logging this lift</div>'}
+      ${noteHtml}
       </div>
       <table class="sets${cols.length > 2 ? ' wide' : ''}"><thead><tr><th>Set</th>${cols.map(c => `<th${cols.length === 1 ? ' colspan="2"' : ''}>${c[1]}</th>`).join('')}<th class="rpe-h"><abbr title="Rate of perceived exertion, 1–10">RPE</abbr></th><th>Done</th></tr></thead><tbody>
       ${ex.sets.map((st, si) => `<tr class="${st.done ? 'done' : ''}${st.warm ? ' warm' : ''}">
-        <td class="n">${st.warm ? '<abbr title="Warm-up set">W</abbr>' : si + (ex.sets[0].warm ? 0 : 1)}</td>
+        <td class="n">${st.warm ? '<abbr title="Warm-up set">W</abbr>' : si + (ex.sets[0].warm ? 0 : 1)}${lastCell(st, si)}</td>
         ${cols.map(([k, l, ph, im]) => `<td${cols.length === 1 ? ' colspan="2"' : ''}><input inputmode="${im}" aria-label="Set ${si + 1} ${l.toLowerCase()}" data-ei="${ei}" data-si="${si}" data-k="${k}" value="${esc(st[k] || '')}" placeholder="${esc(st[ph] || '')}"></td>`).join('')}
         <td><input class="rpe" inputmode="decimal" aria-label="Set ${si + 1} RPE" data-ei="${ei}" data-si="${si}" data-k="rpe" value="${esc(st.rpe || '')}" placeholder="${esc(st.phRPE || '–')}"></td>
         <td><button class="chk" data-act="tick" data-ei="${ei}" data-si="${si}" aria-label="Mark set ${si + 1} done" aria-pressed="${!!st.done}">✓</button></td></tr>`).join('')}
@@ -1869,8 +1887,10 @@ function render() {
   const v = ({ profile: viewProfile, coach: viewCoach, week: viewWeek, program: viewProgram, session: viewSession, history: viewHistory, msgs: viewMsgs, food: viewFood }[S.tab] || viewWeek)();
   renderTabs(); // after the view, so opening Messages clears the badge right away
   const ta = document.activeElement && document.activeElement.id === 'mtext' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+  const ae = document.activeElement, mnFocus = ae && ae.dataset && ae.dataset.mn !== undefined ? [ae.dataset.mn, ae.selectionStart, ae.selectionEnd] : null;
   $('#main').innerHTML = v;
   if (ta && $('#mtext')) { const m = $('#mtext'); m.focus(); m.setSelectionRange(ta[0], ta[1]); }
+  if (mnFocus) { const m = document.querySelector(`[data-mn="${mnFocus[0]}"]`); if (m) { m.focus(); m.setSelectionRange(mnFocus[1], mnFocus[2]); } }
   renderDock();
   syncWake();
 }
@@ -1991,6 +2011,20 @@ document.addEventListener('click', async ev => {
     case 'rmset': S.session.exercises[ei].sets.pop(); saveDraft(); render(); break;
     case 'discard': if (await ask('Discard this session? Nothing will be saved.', 'Discard session')) { S.session = null; saveDraft(); S.tab = 'week'; render(); } break;
     case 'finish': openFinish(); break;
+    case 'mnedit': { const ex = S.session.exercises[ei]; ex.mnEdit = true; ex.mnDraft = undefined; render(); const ta = document.querySelector(`[data-mn="${ei}"]`); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } break; }
+    case 'mncancel': { const ex = S.session.exercises[ei]; ex.mnEdit = false; ex.mnDraft = undefined; saveDraft(); render(); break; }
+    case 'mnsave': {
+      const ex = S.session.exercises[ei], ta = document.querySelector(`[data-mn="${ei}"]`);
+      const text = (ta ? ta.value : ex.mnDraft || '').trim(), id = 'mn-' + exKey(ex.name);
+      const ref = S.db.collection('users/' + S.uid + '/data').doc(id);
+      try {
+        if (text) await ref.set({ kind: 'mynote', id, name: ex.name, text, updated: Date.now() }); else await ref.delete();
+        if (text) (S.mynotes ||= {})[exKey(ex.name)] = { kind: 'mynote', id, name: ex.name, text }; else delete (S.mynotes || {})[exKey(ex.name)];
+        ex.mnEdit = false; ex.mnDraft = undefined; saveDraft(); render();
+        toast(text ? 'Note saved. You\'ll see it every time you do this exercise.' : 'Note removed.');
+      } catch (e) { toast('Note not saved. Check your connection and try again.'); }
+      break;
+    }
     case 'mode':
       if (t.dataset.m === S.mode) break;
       if (t.dataset.m === 'form') S.edit.items = parseText(S.pasteText); else S.pasteText = toText(S.edit.items);
@@ -2158,6 +2192,7 @@ document.addEventListener('input', ev => {
   if (t.id === 'fsq' && S.fs) { S.fs.q = t.value; return; }
   if (/^ft-[pcf]$/.test(t.id)) { foodTargetsPreview(); return; }
   if (t.id === 'search') { S.filter = t.value; const pos = t.selectionStart; render(); const s = $('#search'); s.focus(); s.setSelectionRange(pos, pos); return; }
+  if (t.dataset.mn !== undefined && S.session) { S.session.exercises[+t.dataset.mn].mnDraft = t.value; saveDraft(); return; }
   if (t.dataset.ei !== undefined && t.dataset.k) { S.session.exercises[+t.dataset.ei].sets[+t.dataset.si][t.dataset.k] = t.value; saveDraft(); return; }
   if (t.dataset.bd) { S.bdraft[t.dataset.bd] = t.value; return; }
   if (t.dataset.pe) { S.pedit[t.dataset.pe] = t.value; return; }
@@ -2263,12 +2298,12 @@ function wireAuth() {
   $('#signout').onclick = async () => { if (S.session && !(await ask('You have a workout in progress. Sign out anyway?', 'Sign out'))) return; S.session = null; saveDraft(); AUTH.signOut(); };
 }
 function splitData(all) {
-  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}; let prof = {}, mread = {}, macros = {}; const foods = {}, myfoods = [];
-  all.forEach(x => { if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'msgread') mread = x; else if (x.kind === 'food') foods[x.date] = x; else if (x.kind === 'myfood') myfoods.push(x); else if (x.kind === 'macros') macros = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
-  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes, mread, foods, myfoods, macros };
+  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}, mynotes = {}; let prof = {}, mread = {}, macros = {}; const foods = {}, myfoods = [];
+  all.forEach(x => { if (x.kind === 'mynote') mynotes[exKey(x.name)] = x; else if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'msgread') mread = x; else if (x.kind === 'food') foods[x.date] = x; else if (x.kind === 'myfood') myfoods.push(x); else if (x.kind === 'macros') macros = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
+  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes, mynotes, mread, foods, myfoods, macros };
 }
 function startData(u) {
-  unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; athSubs = {}; S.athData = {}; S.openAth = null; S.exinfo = {}; S.body = []; S.prof = {}; S.bdraft = {}; S.maxes = {}; S.cnotes = {};
+  unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; athSubs = {}; S.athData = {}; S.openAth = null; S.exinfo = {}; S.body = []; S.prof = {}; S.bdraft = {}; S.maxes = {}; S.cnotes = {}; S.mynotes = {};
   const email = (u.email || '').toLowerCase(); S.email = email;
   S.db = wrapDb(FS); S.uid = u.uid; S.canLib = COACHES.includes(email);
   S.lib = []; S.logs = []; S.programs = []; S.assign = {}; S.roster = []; S.checks = {}; S.ppl = {};
@@ -2308,7 +2343,7 @@ function startData(u) {
   else { on(FS.collection('msgs').where('uid', '==', u.uid), onMsgs('mine')); on(FS.collection('msgs').where('uid', '==', 'all'), onMsgs('all')); }
   on(FS.collection('users/' + u.uid + '/data'), snap => {
     const sd = splitData(snap.docs.map(d => d.data()));
-    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes; S.mread = sd.mread; S.foods = sd.foods; S.myfoods = sd.myfoods; S.macros = sd.macros;
+    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes; S.mynotes = sd.mynotes; S.mread = sd.mread; S.foods = sd.foods; S.myfoods = sd.myfoods; S.macros = sd.macros;
     msgLoaded.data = true; render(); maybeMsgPopup();
   });
 }
