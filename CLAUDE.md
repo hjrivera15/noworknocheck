@@ -18,16 +18,17 @@ Workout tracking app for a strength coach (Heriberto) and his athletes. It works
 - `programs/{id}`: `{name, weeks, days[7] (workoutId|null, Mon-first), phases:[{from,to,name,rpe,preset,main:{sets,reps,pct},note}], main:[exercise names], presetWorkouts:[ids], skipSections:[labels]}`. Coach writes.
 - `assign/{uid}`: `{uid, programId, start (YYYY-MM-DD Monday), label, wids:[workout ids in that program]}`. Coach writes. Athletes read only their own.
 
-## Access control (paid clients)
-- Athletes can read ONLY their assigned program (`programs/{programId}`) and the workouts listed in `assign/{uid}.wids`. Unassigned accounts see nothing. Enforced in `firestore.rules`, not just the UI (the repo is public).
-- The coach's app keeps `wids` in sync automatically (`syncAssignWids`, plus `saveProgram` updates assignments before saving the program).
-- Athlete clients never query whole collections for `library`/`programs`; they listen to single docs (`watchProgram` / `watchWorkouts`). Don't add collection listeners for athletes — the rules will reject them.
 - `roster/{uid}`: `{id, name, email, lastSeen}`. Each user writes their own.
 - `exinfo/{exKey}`: coach notes per exercise `{name, text}`.
 - `users/{uid}/data/{doc}`: per-athlete data, split by `kind`:
   - no kind = workout log `{id, workoutId, name, date, week, rpe, notes, exercises:[{name, sets:[{weight,reps,rpe,done}]}]}`
   - `week` = manual check-offs, `body` = weight/BF%, `profile` = height, `max` = 1RM with history, `cnote` = coach's personal notes per workout.
   - The athlete and the coach can both read and write here.
+
+## Access control (paid clients)
+- Athletes can read ONLY their assigned program (`programs/{programId}`) and the workouts listed in `assign/{uid}.wids`. Unassigned accounts see nothing. Enforced in `firestore.rules`, not just the UI (the repo is public).
+- The coach's app keeps `wids` in sync automatically (`syncAssignWids`, plus `saveProgram` updates assignments before saving the program).
+- Athlete clients never query whole collections for `library`/`programs`; they listen to single docs (`watchProgram` / `watchWorkouts`). Don't add collection listeners for athletes — the rules will reject them.
 
 ## Key behaviors to preserve
 - Week tab: Mon–Sun check-off; a day auto-checks when that workout is logged that week.
