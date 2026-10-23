@@ -469,7 +469,7 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 /* App version: bump this AND the number in sw.js VERSION (nwnc-vN) on every upload */
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 document.querySelectorAll('.appver').forEach(p => { p.textContent = 'Version ' + APP_VERSION; });
 const S = {
   openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], teamfoods: [], macros: {}, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
@@ -510,12 +510,14 @@ const store = {
     upsert(S.logs, l); local.set('wt-logs', S.logs); render(); return true;
   },
   async saveProgram(pr) {
+    // unlock any new workouts for athletes on this program BEFORE they see the new program
+    await Promise.all(Object.entries(S.assign).filter(([, a]) => a.programId === pr.id).map(([uid]) => setAssignWids(uid, progWids(pr))));
     try { await S.db.collection('programs').doc(pr.id).set(pr); return true; } catch (e) { toast('Program not saved. Only the coach can edit programs.'); return false; }
   },
   async deleteProgram(id) { try { await S.db.collection('programs').doc(id).delete(); } catch (e) { toast('Program not deleted. Try again.'); } },
   async saveAssign(uid, a) {
     try {
-      if (a.programId || a.label) await S.db.collection('assign').doc(uid).set({ uid, programId: a.programId || '', start: a.start || '', label: a.label || '', updated: Date.now() });
+      if (a.programId || a.label) await S.db.collection('assign').doc(uid).set({ uid, programId: a.programId || '', start: a.start || '', label: a.label || '', wids: progWids(S.programs.find(p => p.id === a.programId)), updated: Date.now() });
       else await S.db.collection('assign').doc(uid).delete();
       return true;
     } catch (e) { toast('Not saved. Only the coach can assign programs.'); return false; }
@@ -2336,6 +2338,52 @@ function splitData(all) {
   all.forEach(x => { if (x.kind === 'mynote') mynotes[exKey(x.name)] = x; else if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'msgread') mread = x; else if (x.kind === 'food') foods[x.date] = x; else if (x.kind === 'myfood') myfoods.push(x); else if (x.kind === 'macros') macros = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
   return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes, mynotes, mread, foods, myfoods, macros };
 }
+/* ---------- access control ----------
+   Athletes can only read their assigned program and the workouts in it (see firestore.rules).
+   assign/{uid}.wids lists those workout ids; the coach's app keeps it in sync automatically. */
+let coachLoaded = {}, progSub = { id: null, un: null }, woSubs = {};
+const progWids = pr => pr ? allProgDays(pr).sort() : [];
+const setAssignWids = (uid, wids) => FS.collection('assign').doc(uid).set({ wids }, { merge: true }).catch(e => console.warn('wids', e && e.code));
+function syncAssignWids() {
+  if (!S.canLib || !coachLoaded.programs || !coachLoaded.assign) return;
+  Object.entries(S.assign).forEach(([uid, a]) => {
+    const pr = a.programId && S.programs.find(p => p.id === a.programId);
+    if (a.programId && !pr) return;
+    const want = progWids(pr), have = (a.wids || []).slice().sort();
+    if (want.join('|') !== have.join('|')) setAssignWids(uid, want);
+  });
+}
+function stopScoped() {
+  if (progSub.un) progSub.un(); progSub = { id: null, un: null };
+  Object.values(woSubs).forEach(w => { if (w.un) w.un(); clearTimeout(w.t); }); woSubs = {};
+}
+function watchProgram(pid) {
+  pid = pid || null;
+  if (progSub.id === pid && (progSub.un || !pid)) return;
+  if (progSub.un) progSub.un();
+  progSub = { id: pid, un: null };
+  if (!pid) { S.programs = []; watchWorkouts([]); return; }
+  progSub.un = FS.doc('programs/' + pid).onSnapshot(s => {
+    S.programs = s.exists ? [s.data()] : [];
+    watchWorkouts(s.exists ? progWids(s.data()) : []);
+    applyMine(); render();
+  }, err => { console.warn('program', err && err.code); progSub.un = null; });
+}
+function watchWorkouts(ids) {
+  const want = new Set(ids);
+  Object.keys(woSubs).forEach(id => { if (!want.has(id)) { const w = woSubs[id]; if (w.un) w.un(); clearTimeout(w.t); delete woSubs[id]; S.lib = S.lib.filter(x => x.id !== id); } });
+  want.forEach(id => { if (!woSubs[id]) listenWorkout(id, 0); });
+}
+function listenWorkout(id, tries) {
+  const w = woSubs[id] = { un: null, t: null };
+  w.un = FS.doc('library/' + id).onSnapshot(s => {
+    S.lib = S.lib.filter(x => x.id !== id); if (s.exists) S.lib.push(s.data()); render();
+  }, err => {
+    // a just-added workout can be denied for a moment until the coach's app unlocks it; retry a few times
+    w.un = null;
+    if (tries < 5 && woSubs[id] === w) w.t = setTimeout(() => { if (woSubs[id] === w) listenWorkout(id, tries + 1); }, 3000 * (tries + 1));
+  });
+}
 function startData(u) {
   unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = []; athSubs = {}; S.athData = {}; S.openAth = null; S.exinfo = {}; S.body = []; S.prof = {}; S.bdraft = {}; S.maxes = {}; S.cnotes = {}; S.mynotes = {};
   const email = (u.email || '').toLowerCase(); S.email = email;
@@ -2346,11 +2394,13 @@ function startData(u) {
   applyMine(); render();
   FS.collection('roster').doc(u.uid).set(Object.assign({ id: u.uid, email: u.email || '', lastSeen: Date.now(), appVersion: APP_VERSION }, u.displayName ? { name: u.displayName } : {}), { merge: true }).catch(() => {});
   const on = (ref, fn) => unsubs.push(ref.onSnapshot(fn, err => console.warn('listen', err && err.code)));
-  on(FS.collection('library'), snap => { S.lib = snap.docs.map(d => d.data()); render(); });
   on(FS.collection('exinfo'), snap => { const m = {}; snap.docs.forEach(d => { const x = d.data(); m[d.id] = x; }); S.exinfo = m; render(); });
-  on(FS.collection('programs'), snap => { S.programs = snap.docs.map(d => d.data()); applyMine(); render(); });
+  coachLoaded = {};
   if (S.canLib) {
-    on(FS.collection('assign'), snap => { const a = {}; snap.docs.forEach(d => { const x = d.data(); a[x.uid || d.id] = x; }); S.assign = a; applyMine(); render(); });
+    // coach: everything
+    on(FS.collection('library'), snap => { S.lib = snap.docs.map(d => d.data()); render(); });
+    on(FS.collection('programs'), snap => { S.programs = snap.docs.map(d => d.data()); coachLoaded.programs = true; applyMine(); syncAssignWids(); render(); });
+    on(FS.collection('assign'), snap => { const a = {}; snap.docs.forEach(d => { const x = d.data(); a[x.uid || d.id] = x; }); S.assign = a; coachLoaded.assign = true; applyMine(); syncAssignWids(); render(); });
     on(FS.collection('roster'), snap => {
       S.roster = snap.docs.map(d => d.data()).filter(r => r.id);
       S.ppl = Object.fromEntries(S.roster.map(r => [r.id, { name: r.name || '', avatarUrl: r.photo || '' }]));
@@ -2366,7 +2416,9 @@ function startData(u) {
       render();
     });
   } else {
-    on(FS.doc('assign/' + u.uid), snap => { S.assign = snap.exists ? { [u.uid]: snap.data() } : {}; applyMine(); render(); });
+    // athlete: only their own assignment, their assigned program, and that program's workouts
+    unsubs.push(stopScoped);
+    on(FS.doc('assign/' + u.uid), snap => { S.assign = snap.exists ? { [u.uid]: snap.data() } : {}; watchProgram(snap.exists && snap.data().programId); applyMine(); render(); });
   }
   S.msgs = []; S.mread = {}; S.mthread = null; S.msgPopped = false; msgLoaded = {};
   const msgsIn = {};

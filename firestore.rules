@@ -8,11 +8,38 @@ service cloud.firestore {
     }
     function isMe(uid) { return signedIn() && request.auth.uid == uid; }
 
-    match /library/{id}  { allow read: if signedIn(); allow write: if isCoach(); }
-    match /programs/{id} { allow read: if signedIn(); allow write: if isCoach(); }
+    // Athletes only see what the coach assigned them.
+    function myAssignPath() { return /databases/$(database)/documents/assign/$(request.auth.uid); }
+    function hasAssign() { return signedIn() && exists(myAssignPath()); }
+    function myAssign() { return get(myAssignPath()).data; }
+
+    // Workouts: coach, or an athlete whose assigned program includes this workout
+    match /library/{id} {
+      allow read: if isCoach() || (hasAssign() && id in myAssign().get('wids', []));
+      allow write: if isCoach();
+    }
+    // Programs: coach, or the athlete assigned to this program
+    match /programs/{id} {
+      allow read: if isCoach() || (hasAssign() && myAssign().get('programId', '') == id);
+      allow write: if isCoach();
+    }
     match /exinfo/{id}   { allow read: if signedIn(); allow write: if isCoach(); }
     match /assign/{uid}  { allow read: if isMe(uid) || isCoach(); allow write: if isCoach(); }
     match /roster/{uid}  { allow read: if isMe(uid) || isCoach(); allow write: if isMe(uid); }
     match /users/{uid}/data/{doc} { allow read: if isMe(uid) || isCoach(); allow write: if isMe(uid) || isCoach(); }
+
+    // Messages: athletes see their own thread plus team announcements ('all')
+    match /msgs/{id} {
+      allow read: if isCoach() || (signedIn() && (resource.data.uid == request.auth.uid || resource.data.uid == 'all'));
+      allow create: if isCoach() || (signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.from == request.auth.uid && request.resource.data.coach == false);
+      allow update, delete: if isCoach();
+    }
+    // Shared food list
+    match /teamfoods/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.by == request.auth.uid;
+      allow update, delete: if isCoach() || (signedIn() && resource.data.by == request.auth.uid);
+    }
   }
 }
