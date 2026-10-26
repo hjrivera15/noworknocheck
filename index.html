@@ -191,6 +191,58 @@ tr.done .chk{background:var(--ok);border-color:var(--ok);color:#fff}
 .rest .t.hot{color:var(--plate)}
 .rest button{background:transparent;border:1px solid color-mix(in srgb,var(--bg) 40%,transparent);color:var(--bg);border-radius:4px;padding:6px 9px;font:700 .95rem var(--display)}
 .rest .lbl{font-size:.8rem;opacity:.75}
+.dock .rest .t{font-size:2.6rem;min-width:96px}
+.dock .rest .t.go{color:var(--ok)}
+.dock .rest .lbl{font-size:.82rem;line-height:1.2}
+.dock .in>button{background:transparent;border:1px solid color-mix(in srgb,var(--bg) 45%,transparent);color:var(--bg);border-radius:6px;padding:10px 10px;font:700 1.05rem var(--display);min-width:48px}
+.ivx{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);text-align:center;overflow:auto}
+.ivx.setup{background:var(--bg);color:var(--ink)}
+.ivx.ph-work{background:#1f7a46;color:#fff}
+.ivx.ph-rest{background:#24508f;color:#fff}
+.ivx.paused .ivt{opacity:.5}
+.ivin{width:100%;max-width:440px}
+.ivk{font:800 1.4rem var(--display);text-transform:uppercase;letter-spacing:.08em;opacity:.85}
+.ivx h2{font:800 1.8rem var(--display);margin:6px 0}
+.ivt{font:800 7rem/1 var(--display);font-variant-numeric:tabular-nums;margin:10px 0}
+.ivnow{font:800 1.8rem/1.15 var(--display)}
+.ivround{font-weight:600;margin-top:8px;opacity:.9}
+.ivnext{margin-top:6px;opacity:.8}
+.ivmoves{font-weight:600;color:var(--muted)}
+.ivcfg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 6px;text-align:left}
+.ivcfg label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.ivcfg input{width:100%;padding:12px 8px;border:1px solid var(--line);border-radius:6px;background:var(--field);font:700 1.4rem var(--display);text-align:center;color:var(--ink)}
+.ivsum{font-weight:700}
+.ivrestnow{font:800 1.4rem var(--display);margin:6px 0}
+.ivrestnow b{font-size:2.4rem;margin-left:6px;font-variant-numeric:tabular-nums}
+.ivsumtab{overflow:auto;margin:10px 0}
+.ivsumtab table{width:100%;border-collapse:collapse}
+.ivsumtab th{font-size:.8rem;color:var(--muted);padding:4px}
+.ivsumtab td{padding:4px;text-align:center}
+.ivsumtab input{width:100%;max-width:90px;padding:10px 4px;border:1px solid var(--line);border-radius:6px;background:var(--field);font:700 1.3rem var(--display);text-align:center;color:var(--ink)}
+.ivrep{display:block;margin:16px auto 0;max-width:220px;font-weight:600}
+.ivrep input{display:block;width:100%;margin-top:6px;padding:12px;border:0;border-radius:6px;font:800 1.8rem var(--display);text-align:center}
+.ivbtns{display:flex;gap:12px;justify-content:center;margin-top:22px}
+.ivbtns .btn{min-width:120px;padding:14px 18px;font-size:1.2rem}
+.ivx:not(.setup) .btn.ghost{background:transparent;color:inherit;border:2px solid currentColor}
+.ivcard{display:flex;align-items:center;justify-content:space-between;gap:10px;background:color-mix(in srgb,var(--ok) 12%,var(--panel));border:1px solid var(--ok);border-radius:6px;padding:10px 12px;margin:6px 0 10px}
+.ivcard b{display:block}
+.ivcard span{font-size:.85rem;color:var(--muted)}
+.ltime{margin-top:6px;font-weight:600}
+.prefs{display:flex;flex-direction:column;gap:8px}
+.pref{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px}
+.pref input{width:22px;height:22px;margin-top:2px;flex:none}
+.pref small{display:block;color:var(--muted);font-size:.82rem;margin-top:2px}
+.pwbadge{display:inline-block;background:var(--plate);color:#1b1b1b;font:800 .85rem var(--display);text-transform:uppercase;letter-spacing:.04em;border-radius:4px;padding:2px 8px;margin-left:6px;vertical-align:1px}
+.pwstar-s{color:var(--plate);margin-left:4px;font-size:1.1rem}
+.pwcard{text-align:center;padding:30px 20px 26px}
+.pwcard .pwstar{font-size:4.5rem;line-height:1;color:var(--plate)}
+.pwcard h2{font:800 2.6rem var(--display);letter-spacing:.04em;margin:8px 0 4px}
+.pwcard p{font-weight:600;margin:0 0 18px}
+.dbtns{display:flex;flex-direction:column;align-items:center;gap:4px}
+.mvlist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mvday{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:10px 12px;color:inherit;font:inherit}
+.mvday span{font-size:.85rem;color:var(--muted)}
+.mvnote{color:var(--muted)}
 
 /* Builder */
 label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
@@ -469,10 +521,10 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 /* App version: bump this AND the number in sw.js VERSION (nwnc-vN) on every upload */
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 document.querySelectorAll('.appver').forEach(p => { p.textContent = 'Version ' + APP_VERSION; });
 const S = {
-  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], teamfoods: [], macros: {}, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
+  openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], teamfoods: [], macros: {}, moves: {}, iv: null, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
   db: null, uid: null, canLib: false, filter: '', openLog: null, rest: null
 };
 
@@ -523,7 +575,7 @@ const store = {
     } catch (e) { toast('Not saved. Only the coach can assign programs.'); return false; }
   },
   async saveChecks(key) {
-    const doc = { kind: 'week', id: key, checked: (S.checks[key] || {}).checked || {} };
+    const cur = S.checks[key] || {}, doc = { kind: 'week', id: key, checked: cur.checked || {}, ...(cur.perfect ? { perfect: true } : {}) };
     S.checks[key] = doc;
     if (S.db && S.uid) { try { await S.db.collection('users/' + S.uid + '/data').doc(key).set(doc); return; } catch (e) {} }
     local.set('wt-checks', S.checks);
@@ -770,6 +822,7 @@ function sessionsHtml(logs, canDelete) {
   return logs.map(l => `<div class="log"><button data-act="openlog" data-id="${l.id}" aria-expanded="${S.openLog === l.id}">
       <span><span class="nm">${esc(l.name)}</span><br><span class="meta">${l.week ? 'Wk ' + l.week + ' · ' : ''}${fmtDate(l.date)} · ${setsDone(l)} sets · ${Math.round(volume(l)).toLocaleString()} lbs${l.rpe ? ' · RPE ' + l.rpe : ''}</span></span><span aria-hidden="true">${S.openLog === l.id ? '−' : '+'}</span></button>
     ${S.openLog === l.id ? `<div class="body">${l.exercises.filter(e => e.sets.some(s => s.done)).map(e => `<div><b>${esc(e.name)}</b>: ${e.sets.filter(s => s.done).map(s => setTxt(s)).join(', ')}</div>`).join('')}
+      ${(l.timing || []).map(t => `<div class="ltime">⏱ ${esc(t)}</div>`).join('')}
       ${l.notes ? `<div style="margin-top:6px;color:var(--muted)">“${esc(l.notes)}”</div>` : ''}${canDelete ? `<button class="link" data-act="dellog" data-id="${l.id}">Delete session</button>` : ''}</div>` : ''}</div>`).join('');
 }
 
@@ -1085,7 +1138,7 @@ function foodTargetsPreview() { const el = $('#ftcal'); if (el) { const m = { p:
 let wakeLock = null, wakeAsking = false;
 async function syncWake() {
   if (!('wakeLock' in navigator) || wakeAsking) return;
-  const want = !!S.session && !document.hidden;
+  const want = !!S.session && !document.hidden && prefs().wake;
   if (want && !wakeLock) {
     wakeAsking = true;
     try {
@@ -1122,7 +1175,62 @@ function doneFor(days, i, ws, logs, checks) {
   const a = ws.getTime(), b = a + 7 * 864e5;
   return logs.some(l => l.workoutId === wid && l.date >= a && l.date < b);
 }
-const dayDone = (i, ws = weekStart()) => doneFor(schedDaysAt(ws), i, ws, S.logs, S.checks);
+/* ---------- moving workouts within a week ----------
+   users/{uid}/data/mv-YYYY-MM-DD {kind:'moves', week, days[7] (workout id|null after the moves), origin[7] (original day index of what's there now)}.
+   Only that week changes; the program is never touched, and a new week starts clean. */
+const mvKey = ws => 'mv-' + isoDate(ws);
+function effDays(base, ws, moves) {
+  const m = (moves || {})[mvKey(ws)];
+  if (!m || !Array.isArray(m.days) || m.days.length !== 7) return base;
+  const same = (a, b) => a.filter(Boolean).sort().join() === b.filter(Boolean).sort().join();
+  return same(base, m.days) ? m.days : base; // ignore stale moves if the program changed underneath
+}
+const movedLabels = (base, ws, moves) => {
+  const m = (moves || {})[mvKey(ws)]; if (!m || effDays(base, ws, moves) !== m.days) return [];
+  const pairs = (m.origin || []).map((o, k) => o != null && o !== k && m.days[k] ? [o, k] : null).filter(Boolean), d = i => DAYS[i].slice(0, 3);
+  return pairs.filter(([o, k]) => !pairs.some(([o2, k2]) => o2 === k && k2 === o && o2 < o)) // a straight swap shows once as "Fri ⇄ Mon"
+    .map(([o, k]) => pairs.some(([o2, k2]) => o2 === k && k2 === o) ? `${d(o)} ⇄ ${d(k)}` : `${d(o)} → ${d(k)}`);
+};
+/* "hard day" words, checked against the workout name, focus and section names. Edit here to tune the warnings. */
+const HARD_DAY = { lower: /\b(lower|squat|deadlift|hinge|legs?)\b/i, hard: /\b(lower|squat|deadlift|hinge|interval|tabata|sim|test)/i, longRun: /long run/i, test: /\btest/i };
+const dayText = id => { const w = id && S.lib.find(x => x.id === id); return w ? [w.name, w.focus || '', ...(w.items || []).filter(i => i.type === 'section').map(i => i.label)].join(' ') : ''; };
+function moveWarning(before, after, base, moved = [0, 1, 2, 3, 4, 5, 6]) {
+  const issues = days => { const t = days.map(dayText), out = [];
+    for (let k = 0; k < 6; k++) { if (!days[k] || !days[k + 1] || !(moved.includes(k) || moved.includes(k + 1))) continue; // only pairs the move touches
+      if (HARD_DAY.lower.test(t[k]) && HARD_DAY.lower.test(t[k + 1])) out.push('this puts two lower-body days back to back');
+      if (HARD_DAY.hard.test(t[k]) && (HARD_DAY.longRun.test(t[k + 1]) || HARD_DAY.test.test(t[k + 1]))) out.push(`this puts a hard day right before your ${HARD_DAY.longRun.test(t[k + 1]) ? 'long run' : 'test day'}`); }
+    return out; };
+  const run = days => days.reduce((m, id) => (m.c = id ? m.c + 1 : 0, m.max = Math.max(m.max, m.c), m), { c: 0, max: 0 }).max;
+  const fresh = issues(after);
+  if (run(after) >= 3 && run(base) < 3 && run(before) < 3) fresh.push(`this makes ${run(after)} training days in a row`);
+  return fresh.length ? `Heads up: ${fresh[0]}.` : '';
+}
+async function saveMove(from, to) {
+  const ws = weekStart(), k = mvKey(ws), base = S.sched.days, eff = effDays(base, ws, S.moves), cur = S.moves[k];
+  const origin = cur && eff === cur.days && Array.isArray(cur.origin) ? [...cur.origin] : base.map((w, i) => w ? i : null);
+  const days = [...eff]; [days[from], days[to]] = [days[to], days[from]]; [origin[from], origin[to]] = [origin[to], origin[from]];
+  const doc = { kind: 'moves', id: k, week: isoDate(ws), days, origin, updated: Date.now() };
+  S.moves = { ...S.moves, [k]: doc };
+  const wk = wkKey(), c = { ...((S.checks[wk] || {}).checked || {}) }; // a manual ✓ travels with its workout
+  if (c[from] !== undefined || c[to] !== undefined) { const a = c[from], b = c[to]; if (b === undefined) delete c[from]; else c[from] = b; if (a === undefined) delete c[to]; else c[to] = a; S.checks[wk] = { ...(S.checks[wk] || { kind: 'week', id: wk }), checked: c }; store.saveChecks(wk); }
+  if (S.db && S.uid) { try { await S.db.collection('users/' + S.uid + '/data').doc(k).set(doc); } catch (e) { toast('Move not saved. Check your connection.'); } }
+}
+/* ---------- Perfect Week: every scheduled workout of the week done ---------- */
+const weekPerfect = (days, ws, logs, checks) => { const idx = days.map((w, i) => w ? i : -1).filter(i => i >= 0); return idx.length > 0 && idx.every(i => doneFor(days, i, ws, logs, checks)); };
+const myWeekPerfect = (extraLogs = []) => { const ws = weekStart(); return weekPerfect(effDays(S.sched.days, ws, S.moves), ws, [...S.logs, ...extraLogs], S.checks); };
+function celebrateIfPerfect(wasPerfect, extraLogs) {
+  if (wasPerfect || !myWeekPerfect(extraLogs)) return;
+  const k = wkKey(), doc = S.checks[k] || { kind: 'week', id: k, checked: {} };
+  if (doc.perfect) return; // only the first time this week
+  S.checks[k] = { ...doc, perfect: true }; store.saveChecks(k);
+  $('#overlay').innerHTML = `<div class="modal pwm" role="dialog" aria-modal="true" aria-labelledby="pwh"><div class="sheet pwcard">
+    <div class="pwstar" aria-hidden="true">★</div><h2 id="pwh">PERFECT WEEK</h2><p>No work, no check — you did the work.</p>
+    <button class="btn go wide" data-act="pwclose">Let's go</button></div></div>`;
+  beep(784, 160); setTimeout(() => beep(1046, 300), 170); buzz([100, 60, 220]);
+}
+const dayDone = (i, ws = weekStart()) => doneFor(effDays(schedDaysAt(ws), ws, S.moves), i, ws, S.logs, S.checks);
+/* progress grid columns are the program's days; find where that workout sits this week (it may have moved) */
+const gridDone = (i, ws) => { const base = schedDaysAt(ws), eff = effDays(base, ws, S.moves), j = eff.indexOf(base[i]); return j >= 0 && doneFor(eff, j, ws, S.logs, S.checks); };
 function loggedOn(days, i, ws, logs) {
   const wid = days[i], a = ws.getTime(), b = a + 7 * 864e5;
   const l = logs.filter(l => l.workoutId === wid && l.date >= a && l.date < b).sort((x, y) => y.date - x.date)[0];
@@ -1139,7 +1247,7 @@ function progInfo(ws = weekStart()) {
 function weekDetail(wn, ws, pi) {
   const ph = (pi.p.phases || []).find(x => wn >= x.from && wn <= x.to) || null;
   let out = ph ? `<div class="phn">${esc(ph.name)} · RPE ${esc(ph.rpe || ph.preset || '—')}${ph.note ? ` — <span style="font:400 .88rem var(--body);color:var(--muted)">${esc(ph.note)}</span>` : ''}</div>` : '';
-  schedDaysAt(ws).forEach((id, i) => {
+  effDays(schedDaysAt(ws), ws, S.moves).forEach((id, i) => {
     const w = id && S.lib.find(x => x.id === id); if (!w) return;
     const dt = new Date(ws); dt.setDate(ws.getDate() + i);
     let sec = '';
@@ -1166,8 +1274,8 @@ function programHtml() {
   let rows = '', done = 0;
   for (let w = 1; w <= pi.weeks; w++) {
     const ws = new Date(pi.st); ws.setDate(ws.getDate() + 7 * (w - 1));
-    const open = S.openWeek === w;
-    rows += `<tr class="${w === pi.wk ? 'cur' : ''}"><td><button class="wkbtn" data-act="openweek" data-w="${w}" aria-expanded="${open}">Week ${w} ${open ? '▾' : '▸'}</button></td>${idx.map(i => { const y = dayDone(i, ws); done += y ? 1 : 0; return `<td>${y ? '<span class="y" aria-label="done">✓</span>' : '<span class="n" aria-label="not done">·</span>'}</td>`; }).join('')}</tr>`;
+    const open = S.openWeek === w, pw = weekPerfect(effDays(schedDaysAt(ws), ws, S.moves), ws, S.logs, S.checks);
+    rows += `<tr class="${w === pi.wk ? 'cur' : ''}"><td><button class="wkbtn" data-act="openweek" data-w="${w}" aria-expanded="${open}">Week ${w} ${open ? '▾' : '▸'}</button>${pw ? '<span class="pwstar-s" title="Perfect Week">★</span>' : ''}</td>${idx.map(i => { const y = gridDone(i, ws); done += y ? 1 : 0; return `<td>${y ? '<span class="y" aria-label="done">✓</span>' : '<span class="n" aria-label="not done">·</span>'}</td>`; }).join('')}</tr>`;
     if (open) rows += `<tr class="wkdetail"><td colspan="${idx.length + 1}">${weekDetail(w, ws, pi)}</td></tr>`;
   }
   const grid = `<h2 class="h">${pi.weeks}-week progress <span style="font:600 1rem var(--body);color:var(--muted)">${done} of ${pi.weeks * idx.length}</span></h2>
@@ -1175,15 +1283,15 @@ function programHtml() {
   return { top, grid };
 }
 function viewWeek() {
-  const ws = weekStart(), today = (new Date().getDay() + 6) % 7;
-  const days = S.sched.days.map(id => id ? (S.lib.find(w => w.id === id) || { missing: true }) : null);
+  const ws = weekStart(), today = (new Date().getDay() + 6) % 7, eff = effDays(S.sched.days, ws, S.moves);
+  const days = eff.map(id => id ? (S.lib.find(w => w.id === id) || { missing: true }) : null), moved = movedLabels(S.sched.days, ws, S.moves);
   const planned = days.filter(Boolean).length;
   const done = days.reduce((t, w, i) => t + (w && dayDone(i) ? 1 : 0), 0);
   if (!planned) return S.db ? `<div class="empty"><strong>No program assigned yet</strong>${S.canLib ? 'Assign yourself (or anyone) a program in the Coach tab.' : 'Your coach will assign you a program. Check back soon.'}<div style="margin-top:14px">${S.canLib ? '<button class="btn go" data-tab="coach">Open Coach</button>' : ''}</div></div>`
     : `<div class="empty"><strong>No program yet</strong>Sign in to see your assigned program.</div>`;
   const prog = programHtml();
   let html = (prog ? prog.top : '') + `<div class="wk-head"><h2>This week</h2>${S.myProg ? `<span class="wk-sub">${esc(S.myProg.name)}</span>` : ''}</div>
-    <p class="wk-sub">Week of ${ws.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} · <b>${done} of ${planned}</b> workouts done${done === planned && planned ? ' — week complete 💪' : ''}</p>
+    <p class="wk-sub">Week of ${ws.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} · <b>${done} of ${planned}</b> workouts done${done === planned && planned ? ' <span class="pwbadge">★ Perfect Week</span>' : ''}</p>
     <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${planned}" aria-valuenow="${done}"><i style="width:${planned ? done / planned * 100 : 0}%"></i></div>`;
   html += days.map((w, i) => {
     const date = new Date(ws); date.setDate(ws.getDate() + i);
@@ -1194,10 +1302,11 @@ function viewWeek() {
     return `<div class="day ${isDone ? 'done' : ''} ${i === today ? 'today' : ''}">
       <button class="chk" data-act="daytick" data-i="${i}" aria-pressed="${!!isDone}" aria-label="Mark ${DAYS[i]} ${isDone ? 'not done' : 'done'}">✓</button>
       <div class="dinfo">${label}<div class="dw">${esc(w.name)}${S.cnotes[w.id] ? '<span class="ntag">📝 Note for you</span>' : ''}</div>${w.focus ? `<div class="dfocus">${esc(w.focus)}</div>` : ''}</div>
-      ${isDone ? '' : `<button class="btn go small" data-act="start" data-id="${w.id}">Start</button>`}</div>`;
+      ${isDone ? '' : `<div class="dbtns"><button class="btn go small" data-act="start" data-id="${w.id}" data-i="${i}">Start</button><button class="link" data-act="mvopen" data-i="${i}">Move</button></div>`}</div>`;
   }).join('');
+  if (moved.length) html += `<p class="note mvnote">Moved this week: ${moved.join(', ')} · <button class="link" data-act="mvreset">Undo moves</button></p>`;
   if (prog) html += prog.grid;
-  html += `<p class="note">Tap ✓ to check off a day. Finishing a workout in the app checks it off for you. The week resets every Monday.</p>`;
+  html += `<p class="note">Tap ✓ to check off a day. Finishing a workout in the app checks it off for you. Use Move to swap days this week only. The week resets every Monday.</p>`;
   return html;
 }
 
@@ -1295,16 +1404,16 @@ function athWeek(uid) {
   const a = S.assign[uid], pr = a && S.programs.find(p => p.id === a.programId);
   if (!pr) return null;
   const d = S.athData[uid] || { logs: [], checks: {}, loaded: false };
-  const days = daysAt(pr, wkOf(a.start) || 0), ws = weekStart(), today = (new Date().getDay() + 6) % 7;
+  const ws = weekStart(), base = daysAt(pr, wkOf(a.start) || 0), days = effDays(base, ws, d.moves), today = (new Date().getDay() + 6) % 7;
   const idx = days.map((w, i) => w ? i : -1).filter(i => i >= 0);
   const done = idx.map(i => doneFor(days, i, ws, d.logs, d.checks));
-  const wk = wkOf(a.start), active = wk >= 1 && wk <= (pr.weeks || 6);
-  return { pr, a, d, days, ws, today, idx, done, n: done.filter(Boolean).length, wk, active };
+  const wk = wkOf(a.start), active = wk >= 1 && wk <= (pr.weeks || 6), n = done.filter(Boolean).length;
+  return { pr, a, d, days, ws, today, idx, done, n, wk, active, moved: movedLabels(base, ws, d.moves), perfect: active && idx.length > 0 && n === idx.length };
 }
 function dotsHtml(w) {
   if (!w.d.loaded) return '<div class="as">Loading…</div>';
   if (!w.active) return '';
-  return `<div class="wkdots" aria-label="This week: ${w.n} of ${w.idx.length} done">${w.idx.map((i, k) => `<span class="d ${w.done[k] ? 'y' : i < w.today ? 'miss' : ''} ${i === w.today ? 'today' : ''}" title="${DAYS[i]}: ${w.done[k] ? 'done' : i < w.today ? 'missed' : 'not yet'}">${DAYS[i].slice(0, 2)}</span>`).join('')}<span class="cnt">${w.n} of ${w.idx.length} this week</span></div>`;
+  return `<div class="wkdots" aria-label="This week: ${w.n} of ${w.idx.length} done">${w.idx.map((i, k) => `<span class="d ${w.done[k] ? 'y' : i < w.today ? 'miss' : ''} ${i === w.today ? 'today' : ''}" title="${DAYS[i]}: ${w.done[k] ? 'done' : i < w.today ? 'missed' : 'not yet'}">${DAYS[i].slice(0, 2)}</span>`).join('')}<span class="cnt">${w.n} of ${w.idx.length} this week</span>${w.perfect ? '<span class="pwbadge">★ Perfect Week</span>' : ''}</div>${w.moved.length ? `<div class="as mvnote">Moved: ${w.moved.join(', ')}</div>` : ''}`;
 }
 function viewAthleteDetail(uid) {
   const pf = S.ppl[uid] || {}, a = S.assign[uid] || {}, name = pf.name || a.label || 'Unnamed athlete';
@@ -1314,7 +1423,7 @@ function viewAthleteDetail(uid) {
     <div class="phase" style="margin-top:8px"><div class="ph-wk">${esc(name)}</div><div class="ph-note">${w ? `${esc(w.pr.name)} · ${w.active ? `Week ${w.wk} of ${w.pr.weeks || 6}` : w.wk < 1 ? 'starts ' + esc(w.a.start) : 'program finished'}` : 'No program assigned'}${logs.length ? ` · last workout ${fmtDate(logs[0].date)}` : ''}</div></div>`;
   if (!d.loaded) return html + '<p class="note">Loading their logs…</p>';
   if (w && w.active) {
-    html += `<h2 class="h">This week <span style="font:600 1rem var(--body);color:var(--muted)">${w.n} of ${w.idx.length} done</span></h2><div class="adet">` + w.idx.map((i, k) => {
+    html += `<h2 class="h">This week <span style="font:600 1rem var(--body);color:var(--muted)">${w.n} of ${w.idx.length} done</span>${w.perfect ? ' <span class="pwbadge">★ Perfect Week</span>' : ''}</h2>${w.moved.length ? `<p class="note mvnote" style="margin-top:-4px">Moved this week: ${w.moved.join(', ')}</p>` : ''}<div class="adet">` + w.idx.map((i, k) => {
       const wo = S.lib.find(x => x.id === w.days[i]), dt = new Date(w.ws); dt.setDate(w.ws.getDate() + i);
       const when = loggedOn(w.days, i, w.ws, d.logs);
       const st = w.done[k] ? `<span class="st y">✓ Done${when ? ' ' + new Date(when).toLocaleDateString(undefined, { weekday: 'short' }) : ''}</span>` : i < w.today ? '<span class="st m">Missed</span>' : i === w.today ? '<span class="st u">Today</span>' : '<span class="st u">Upcoming</span>';
@@ -1436,8 +1545,12 @@ function viewSession() {
   if (cn.text) html += `<div class="coachmsg mine"><span class="cl">Just for you · from your coach</span>${linkify(cn.text)}</div>`;
   if (focus) html += `<div class="coachmsg"><span class="cl">From your coach</span>${linkify(focus)}</div>`;
   if (ph && (ph.name || ph.note)) html += `<div class="coachmsg phasemsg"><span class="cl">Week ${pi.wk} · ${esc(ph.name || '')}${ph.rpe ? ' · RPE ' + esc(ph.rpe) : ''}</span>${esc(ph.note || '')}</div>`;
+  if (!s.blocks) s.blocks = buildBlocks(s.exercises); // drafts started before timers existed
   s.exercises.forEach((ex, ei) => {
     if (ex.section) html += `<div class="sec-label">${esc(ex.section)}</div>`;
+    const b = s.blocks[ex.blk];
+    if (b && b.iv && b.eis[0] === ei) { const c = { ...b.iv, ...((s.ivcfg || {})[ex.blk] || {}) };
+      html += `<div class="ivcard"><div><b>⏱ Interval timer</b><span>${c.work} sec work · ${c.rest} sec rest · ${c.rounds * b.eis.length} intervals${(s.timing || {})[ex.blk] ? ' · ✓ done' : ''}</span></div><button class="btn go small" data-act="ivopen" data-blk="${ex.blk}">${(s.timing || {})[ex.blk] ? 'Again' : 'Start'}</button></div>`; }
     const last = lastFor(ex.name), cols = setCols(ex);
     const lastWork = last ? last.sets.filter(x => !x.warm) : [], lastWarm = last ? last.sets.find(x => x.warm) : null;
     const warmOff = ex.sets[0] && ex.sets[0].warm ? 1 : 0;
@@ -1835,11 +1948,15 @@ async function saveMotiv(patch) {
   catch (e) { toast('Not saved. Try again.'); return false; }
 }
 
+/* coach's default rest (exinfo/_settings.restDefault), used when a cue doesn't say how long to rest */
+const restSettingsHtml = () => `<div class="mset"><b style="font:800 1.3rem var(--display)">Rest timer</b>
+  <p class="note" style="margin:4px 0 8px">Starts after each logged set. It uses the rest written in the exercise cue ("rest 90 sec", "rest 2 to 3 min" uses 2 min). When a cue doesn't say, it uses this default. Supersets and rounds rest only after the last exercise; warm-up, prep, mobility and cool-down sections don't get a timer.</p>
+  <div class="row" style="gap:8px;align-items:center"><label for="rdef" style="font-weight:600">Default rest</label><input class="inp" id="rdef" inputmode="numeric" value="${coachRest()}" style="max-width:90px"><span>sec</span><button class="btn go small" data-act="rdefsave">Save</button></div></div>`;
 function viewInfoList() {
   const names = [...new Set(S.lib.flatMap(w => w.items.filter(i => i.type === 'ex').map(i => i.name)))].sort((a, b) => a.localeCompare(b));
-  if (!names.length) return motivSettingsHtml() + `<div class="empty"><strong>No exercises yet</strong>Add workouts first. Every exercise in them shows up here.</div>`;
+  if (!names.length) return restSettingsHtml() + motivSettingsHtml() + `<div class="empty"><strong>No exercises yet</strong>Add workouts first. Every exercise in them shows up here.</div>`;
   const n = names.filter(x => S.exinfo[exKey(x)] && S.exinfo[exKey(x)].text).length;
-  return motivSettingsHtml() + `<h2 class="h">Exercise notes</h2><p class="note">Write notes once per exercise. They show up everywhere that exercise is used. ${n} of ${names.length} have notes.</p>` +
+  return restSettingsHtml() + motivSettingsHtml() + `<h2 class="h">Exercise notes</h2><p class="note">Write notes once per exercise. They show up everywhere that exercise is used. ${n} of ${names.length} have notes.</p>` +
     names.map(x => { const has = S.exinfo[exKey(x)] && S.exinfo[exKey(x)].text; return `<button class="exi" data-act="info" data-n="${esc(x)}"><span><b>${esc(x)}</b><br><span class="s ${has ? 'y' : ''}">${has ? '✓ Has notes' : 'No notes yet'}</span></span><span class="ibtn ${has ? 'has' : ''}" aria-hidden="true">i</span></button>`; }).join('');
 }
 
@@ -1898,7 +2015,10 @@ function viewProfile() {
     <div><label>Inches<input inputmode="numeric" data-bd="inch" value="${esc(dr.inch)}" placeholder="10"></label></div>
     <div><button class="btn ghost" data-act="saveheight" style="width:100%;padding:11px">Save height</button></div>
   </div>
-  ${S.body.length ? `<h2 class="h">History</h2>${bodyHistory(S.body, true)}` : ''}`;
+  ${S.body.length ? `<h2 class="h">History</h2>${bodyHistory(S.body, true)}` : ''}
+  <h2 class="h">Workout settings</h2><p class="note" style="margin-top:-4px">For this phone only.</p>
+  <div class="prefs">${[['sound', 'Timer sounds', 'Beeps for 3-2-1 and Go. iPhones stay silent when the ring switch is on silent.'], ['vib', 'Vibrate', 'Buzzes at each switch. Android phones only.'], ['wake', 'Keep screen on during workouts', 'Stops the phone from going to sleep while a workout is open.']]
+    .map(([k, l, d]) => `<label class="pref"><input type="checkbox" data-pref="${k}" ${prefs()[k] ? 'checked' : ''}><span><b>${l}</b><small>${d}</small></span></label>`).join('')}</div>`;
 }
 
 function viewHistory() {
@@ -1914,8 +2034,187 @@ function viewHistory() {
   <h2 class="h">Sessions</h2>${sessionsHtml(logs, true)}`;
 }
 
-function renderDock() { $('#dock').innerHTML = ''; }
+/* ---------- workout timers ----------
+   Rest timer after each logged set (length read from the cue text) and a Tabata-style interval timer.
+   Both run off timestamps (end time), never a counting interval, so they stay right if the phone
+   switches apps. Sound / vibration / screen-on are per-phone settings (Profile). */
+const PREF_DEF = { sound: true, vib: true, wake: true };
+const prefs = () => ({ ...PREF_DEF, ...local.get('nwnc-prefs', {}) });
+const setPref = (k, v) => local.set('nwnc-prefs', { ...prefs(), [k]: v });
+const coachRest = () => num(((S.exinfo || {})._settings || {}).restDefault) || 90;
+const NO_REST_SEC = /warm|prep|mobility|cool|activation|stretch/i;
+const ROUNDS_RE = /(\d+)\s*(?:x\s*)?(?:rounds?|circuits?)\b/i, SUPERSET_RE = /superset|circuit|giant set|rounds?\b/i;
+/* every rest written in a cue, in seconds: "rest 2 min", "rest 90 sec", "rest 2 to 3 min" (low end), "10 sec rest", "rest 1:30" */
+function restsIn(text) {
+  const out = [], s = String(text || '').toLowerCase();
+  const re = /rest\s*(?:for\s*)?(\d+(?:\.\d+)?)(?:\s*(?:to|-|–)\s*\d+(?:\.\d+)?)?\s*(min|mins|minutes?|m|sec|secs|seconds?|s)\b|(\d+(?:\.\d+)?)(?:\s*(?:to|-|–)\s*\d+(?:\.\d+)?)?\s*(min|mins|minutes?|sec|secs|seconds?|s)\s*(?:of\s*)?rest|rest\s*(\d{1,2}):(\d{2})/g;
+  let m; while ((m = re.exec(s))) {
+    if (m[5]) out.push(+m[5] * 60 + +m[6]);
+    else { const v = +(m[1] || m[3]), u = m[2] || m[4]; out.push(Math.round(/^m/.test(u) ? v * 60 : v)); }
+  }
+  return out;
+}
+const secsOf = s => { const t = planTime(s); if (!t) return 0; const [m, x] = t.split(':').map(Number); return m * 60 + x; };
+/* group a session's exercises into blocks (one per section) and work out how each block rests */
+function buildBlocks(exs) {
+  const blocks = []; let cur = '';
+  exs.forEach((ex, ei) => {
+    if (ex.sec === undefined) ex.sec = ex.section || cur; // older drafts only marked the first exercise of a section
+    cur = ex.sec;
+    if (!blocks.length || ex.section || blocks[blocks.length - 1].sec !== ex.sec) blocks.push({ sec: ex.sec || '', eis: [] });
+    ex.blk = blocks.length - 1; blocks[blocks.length - 1].eis.push(ei);
+  });
+  blocks.forEach(b => {
+    const exList = b.eis.map(i => exs[i]), cue = [b.sec, ...exList.map(e => `${e.rx.notes || ''} ${e.rx.rest || ''}`)].join(' ');
+    const rm = b.sec.match(ROUNDS_RE), rests = restsIn(cue);
+    b.norest = NO_REST_SEC.test(b.sec);
+    b.rounds = rm ? +rm[1] : 0;
+    b.group = exList.length > 1 && (!!rm || SUPERSET_RE.test(b.sec));
+    const last = exList[exList.length - 1], lastR = restsIn(`${last.rx.notes || ''} ${last.rx.rest || ''}`);
+    b.restAfter = lastR.length ? lastR[0] : (b.group ? (restsIn(b.sec)[0] || 0) : 0);
+    // interval (Tabata-style): a rounds block where every move is a time set and a short rest (≤ 30 sec) is written
+    const short = rests.filter(r => r > 0 && r <= 30), allTimed = exList.every(e => !e.kind && secsOf(e.rx.reps) > 0);
+    if (!b.norest && allTimed && short.length && (b.rounds || num(exList[0].rx.sets) > 1)) {
+      const longer = rests.filter(r => r > 30);
+      b.iv = { work: secsOf(exList[0].rx.reps), rest: Math.min(...short), rounds: b.rounds || Math.max(1, parseInt(exList[0].rx.sets) || 1), after: longer.length ? Math.max(...longer) : 0 };
+    }
+  });
+  return blocks;
+}
+/* seconds of rest after logging a set of exercise ei (0 = none) */
+function restFor(ei) {
+  const s = S.session, ex = s.exercises[ei], b = (s.blocks || [])[ex.blk];
+  if (!b || b.norest || b.iv || ex.kind) return 0; // no rest timer after cardio (treadmill, bike, timed runs)
+  if (b.group) return ei === b.eis[b.eis.length - 1] ? (b.restAfter || coachRest()) : 0;
+  return restsIn(`${ex.rx.notes || ''} ${ex.rx.rest || ''}`)[0] || coachRest();
+}
+/* sound: iPhones only allow audio after a tap, so the first tap anywhere unlocks it */
+let AC = null;
+function audioUnlock() { try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} }
+['pointerdown', 'touchend'].forEach(t => document.addEventListener(t, audioUnlock, { passive: true }));
+function beep(freq = 880, ms = 150) {
+  if (!prefs().sound || !AC) return;
+  try { const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime; o.frequency.value = freq; o.connect(g); g.connect(AC.destination);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000); o.start(t); o.stop(t + ms / 1000 + 0.05); } catch (e) {}
+}
+const buzz = p => { if (prefs().vib && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } };
+/* rest timer state: S.rest = {end, total, label, go?} */
+function startRest(sec, label) { if (!sec) return; S.rest = { end: Date.now() + sec * 1000, total: sec, label: label || 'Rest' }; S.restBeep = 0; renderDock(); }
+function renderDock() {
+  const r = S.rest, el = $('#dock');
+  document.body.classList.toggle('has-dock', !!r);
+  if (!r) { el.innerHTML = ''; el.className = ''; return; }
+  const left = Math.max(0, Math.ceil((r.end - Date.now()) / 1000));
+  el.className = 'dock';
+  el.innerHTML = r.go ? `<div class="in"><div class="rest"><span class="t go">GO</span><span class="lbl">${esc(/next:/.test(r.label) ? r.label.replace(/^.*next:\s*/, 'Next: ') : 'Rest is over')}</span></div></div>`
+    : `<div class="in"><div class="rest"><span class="t ${left <= 3 ? 'hot' : ''}" id="restT">${fmt(left)}</span><span class="lbl">${esc(r.label)}</span></div>
+      <button data-act="rminus" aria-label="15 seconds less">−15</button><button data-act="rplus" aria-label="15 seconds more">+15</button><button data-act="rskip">Skip</button></div>`;
+}
+/* one clock for every timer: updates the numbers, beeps 3-2-1, moves interval phases along */
+setInterval(() => {
+  const r = S.rest;
+  if (r && !r.go) {
+    const left = Math.ceil((r.end - Date.now()) / 1000), t = $('#restT');
+    if (t) { t.textContent = fmt(Math.max(0, left)); t.classList.toggle('hot', left <= 3); }
+    const t2 = $('#ivRestT'); if (t2) t2.textContent = fmt(Math.max(0, left));
+    if (left <= 3 && left >= 1 && S.restBeep !== left) { S.restBeep = left; beep(660, 120); }
+    if (left <= 0) { beep(1046, 400); buzz([200, 80, 200]); r.go = true; renderDock(); setTimeout(() => { if (S.rest === r) { S.rest = null; renderDock(); } }, 1800); }
+  }
+  ivTick();
+}, 200);
 const fmt = s => `${Math.floor(s / 60)}:${String(Math.max(0, s % 60)).padStart(2, '0')}`;
+/* interval timer: S.iv = {blk, cfg:{work,rest,rounds}, setup, phases:[{t:'lead'|'work'|'rest', ei, r, dur}], idx, end, paused, left} */
+function ivBlock() { return S.session && S.iv ? S.session.blocks[S.iv.blk] : null; }
+function ivOpen(blk) {
+  const b = S.session.blocks[blk], saved = (S.session.ivcfg || {})[blk];
+  S.iv = { blk, setup: true, cfg: { ...b.iv, ...(saved || {}) } }; renderIv();
+}
+function ivStart() {
+  const iv = S.iv, b = ivBlock(), c = iv.cfg, phases = [{ t: 'lead', dur: 3 }];
+  for (let r = 0; r < c.rounds; r++) b.eis.forEach((ei, k) => {
+    phases.push({ t: 'work', ei, r, dur: c.work });
+    if (!(r === c.rounds - 1 && k === b.eis.length - 1) && c.rest > 0) phases.push({ t: 'rest', ei, r, dur: c.rest });
+  });
+  (S.session.ivcfg ||= {})[iv.blk] = { work: c.work, rest: c.rest, rounds: c.rounds }; saveDraft();
+  Object.assign(iv, { setup: false, phases, idx: 0, end: Date.now() + 3000, paused: false, beepAt: 0 });
+  audioUnlock(); renderIv();
+}
+function ivSet(ei, r) { // the set row for round r of exercise ei (adds rows if the athlete chose more rounds)
+  const ex = S.session.exercises[ei];
+  while (ex.sets.length <= r) { const l = ex.sets[ex.sets.length - 1] || {}; const ns = { rpe: '', done: false, phRPE: l.phRPE || '' }; setCols(ex).forEach(([k, , ph]) => { ns[k] = ''; ns[ph] = l[k] || l[ph] || ''; }); ex.sets.push(ns); }
+  return ex.sets[r];
+}
+function ivTick() {
+  const iv = S.iv; if (!iv || iv.setup || iv.summary || iv.paused) return;
+  let changed = false;
+  while (iv.end <= Date.now()) { // catch up if the phone was asleep or the app was in the background
+    const ph = iv.phases[iv.idx];
+    if (ph && ph.t === 'work') { ivSet(ph.ei, ph.r).done = true; saveDraft(); }
+    iv.idx++; changed = true;
+    if (iv.idx >= iv.phases.length) return ivFinish(true);
+    iv.end += iv.phases[iv.idx].dur * 1000;
+  }
+  const left = Math.ceil((iv.end - Date.now()) / 1000);
+  if (changed) { const t = iv.phases[iv.idx].t; beep(t === 'work' ? 1046 : 520, t === 'work' ? 300 : 200); buzz(t === 'work' ? [250] : [120, 60, 120]); iv.beepAt = 0; renderIv(); return; }
+  if (left <= 3 && left >= 1 && iv.beepAt !== left) { iv.beepAt = left; beep(660, 110); }
+  const el = $('#ivT'); if (el) el.textContent = fmt(Math.max(0, left));
+}
+function ivFinish(done) {
+  const iv = S.iv, b = ivBlock(), s = S.session; if (!iv) return;
+  if (!iv.setup) {
+    const c = iv.cfg, total = c.rounds * b.eis.length;
+    (s.timing ||= {})[iv.blk] = `${b.sec ? b.sec.replace(/\s*[—–-].*$/, '') + ': ' : ''}${c.work}/${c.rest} × ${total}${done ? '' : ' (ended early)'}`;
+    saveDraft();
+  }
+  const after = done && !iv.setup ? (b.iv.after || coachRest()) : 0;
+  // finished: keep the screen up as a "block done" summary so every round's reps can be checked or filled in
+  S.iv = done && !iv.setup ? { blk: iv.blk, cfg: iv.cfg, summary: true } : null;
+  if (after) startRest(after, 'Rest after the block');
+  renderIv(); render();
+}
+function renderIv() {
+  let el = $('#ivx');
+  if (!S.iv) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'ivx'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
+  const iv = S.iv, b = ivBlock(), names = b.eis.map(i => S.session.exercises[i].name), c = iv.cfg;
+  if (iv.setup) {
+    el.className = 'ivx setup';
+    el.innerHTML = `<div class="ivin"><div class="ivk">Interval timer</div><h2>${esc(b.sec || 'Intervals')}</h2>
+      <p class="ivmoves">${names.map(esc).join(' → ')}</p>
+      <div class="ivcfg">${[['work', 'Work (sec)'], ['rest', 'Rest (sec)'], ['rounds', 'Rounds']].map(([k, l]) => `<label>${l}<input inputmode="numeric" data-ivc="${k}" value="${esc(String(c[k]))}"></label>`).join('')}</div>
+      <p class="ivsum" id="ivsum">${c.rounds} rounds × ${names.length} moves = ${c.rounds * names.length} intervals</p>
+      <p class="note">Changes only count for today's workout. Your coach's plan stays the same.</p>
+      <div class="ivbtns"><button class="btn ghost" data-act="ivend">Cancel</button><button class="btn go" data-act="ivgo">Start</button></div></div>`;
+    return;
+  }
+  if (iv.summary) {
+    const r = S.rest;
+    el.className = 'ivx setup';
+    el.innerHTML = `<div class="ivin"><div class="ivk">Block done ✓</div><h2>${esc(b.sec || 'Intervals')}</h2>
+      ${r ? `<div class="ivrestnow">Rest <b id="ivRestT">${fmt(Math.max(0, Math.ceil((r.end - Date.now()) / 1000)))}</b></div>` : ''}
+      <p class="note">Check your reps for each round. You can also change them later in the workout.</p>
+      <div class="ivsumtab"><table><thead><tr><th>Round</th>${b.eis.map(ei => `<th>${esc(S.session.exercises[ei].name)}</th>`).join('')}</tr></thead><tbody>
+      ${Array.from({ length: c.rounds }, (_, rr) => `<tr><td>${rr + 1}</td>${b.eis.map(ei => `<td><input inputmode="numeric" data-ivr="${ei}:${rr}" value="${esc(ivSet(ei, rr).reps || '')}" placeholder="reps" aria-label="${esc(S.session.exercises[ei].name)} round ${rr + 1} reps"></td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>
+      <div class="ivbtns"><button class="btn go" data-act="ivclose">Done</button></div></div>`;
+    return;
+  }
+  const ph = iv.phases[iv.idx], total = c.rounds * b.eis.length;
+  const workNo = iv.phases.slice(0, iv.idx + 1).filter(p => p.t === 'work').length;
+  const nextWork = iv.phases.slice(iv.idx + 1).find(p => p.t === 'work');
+  const nm = ei => esc(S.session.exercises[ei].name);
+  const left = Math.max(0, Math.ceil(((iv.paused ? Date.now() + iv.left : iv.end) - Date.now()) / 1000));
+  el.className = 'ivx ph-' + ph.t + (iv.paused ? ' paused' : '');
+  const repBox = ph.t === 'rest' ? (() => { const st = ivSet(ph.ei, ph.r); return `<label class="ivrep">Reps of ${nm(ph.ei)}<input inputmode="numeric" data-ivr="${ph.ei}:${ph.r}" value="${esc(st.reps || '')}" placeholder="reps"></label>`; })() : '';
+  el.innerHTML = `<div class="ivin">
+    <div class="ivk">${ph.t === 'lead' ? 'Get ready' : ph.t === 'work' ? 'Work' : 'Rest'}${iv.paused ? ' · paused' : ''}</div>
+    <div class="ivt" id="ivT">${fmt(left)}</div>
+    <div class="ivnow">${ph.t === 'work' ? nm(ph.ei) : ph.t === 'lead' ? `First: ${nm(b.eis[0])}` : nextWork ? `Next: ${nm(nextWork.ei)}` : 'Last one done'}</div>
+    <div class="ivround">Round ${Math.max(1, workNo)} of ${total}</div>
+    ${ph.t === 'work' && nextWork ? `<div class="ivnext">Next: ${nm(nextWork.ei)}</div>` : ''}
+    ${repBox}
+    <div class="ivbtns"><button class="btn ghost" data-act="ivend">End</button><button class="btn go" data-act="${iv.paused ? 'ivresume' : 'ivpause'}">${iv.paused ? 'Resume' : 'Pause'}</button></div></div>`;
+}
 
 function render() {
   if (S.tab === 'session' && !S.session) S.tab = 'week';
@@ -1976,10 +2275,11 @@ async function startSession(w) {
       sets.unshift({ warm: true, weight: '', reps: '', rpe: '', done: false, phRPE: '',
         phW: (lastWarm && lastWarm.weight) || (work ? String(round5(work * 0.5)) : ''), phR: sets[0].phR });
     }
-    exercises.push({ name: it.name, kind, section, rx: { ...it }, sets });
+    exercises.push({ name: it.name, kind, section, sec, rx: { ...it }, sets });
     section = '';
   }
-  S.session = { id: newId(), workoutId: w.id, name: w.name, focus: w.focus || '', start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises };
+  S.session = { id: newId(), workoutId: w.id, name: w.name, focus: w.focus || '', start: Date.now(), week: pi && pi.wk >= 1 && pi.wk <= pi.weeks ? pi.wk : null, exercises, blocks: buildBlocks(exercises) };
+  S.rest = null;
   saveDraft(); S.tab = 'session'; render(); window.scrollTo(0, 0);
   showMotivation(w);
 }
@@ -2007,6 +2307,7 @@ function openFinish() {
     const log = {
       id: s.id, workoutId: s.workoutId, name: s.name, date: Date.now(), week: s.week || null,
       mins: Math.max(1, Math.round((Date.now() - s.start) / 60000)), rpe, pros, cons, notes,
+      ...(s.timing && Object.keys(s.timing).length ? { timing: Object.values(s.timing) } : {}),
       exercises: s.exercises.map(e => ({ name: e.name, sets: e.sets.map(x => {
         const o = {}; setCols(e).forEach(([k, , ph]) => { o[k] = x[k] || x[ph] || ''; });
         return { ...o, rpe: x.rpe || '', done: !!x.done, ...(x.warm ? { warm: true } : {}) };
@@ -2014,10 +2315,11 @@ function openFinish() {
     };
     if (!(S.db && S.uid)) log._local = true;
     $('#overlay').innerHTML = '';
-    S.session = null; saveDraft();
-    const idx = S.sched.days.indexOf(log.workoutId);
+    S.session = null; S.rest = null; saveDraft();
+    const idx = effDays(S.sched.days, weekStart(), S.moves).indexOf(log.workoutId), was = myWeekPerfect();
     S.tab = idx >= 0 ? 'week' : 'history'; S.openLog = log.id;
     await store.saveLog(log);
+    celebrateIfPerfect(was, [log]);
     const sent = notes && S.db && !S.canLib && await sendMsg(S.uid, notes, { workout: log.name, logId: log.id });
     render(); toast((idx >= 0 ? 'Session saved — day checked off.' : 'Session saved.') + (sent ? ' Sent to your coach.' : ''));
   };
@@ -2035,17 +2337,67 @@ document.addEventListener('click', async ev => {
   const ei = +t.dataset.ei, si = +t.dataset.si, i = +t.dataset.i;
   switch (a) {
     case 'new': S.edit = { id: null, name: '', focus: '', items: [] }; S.pasteText = ''; S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break;
-    case 'start': startSession(find()); break;
+    case 'start': {
+      // starting a different day's workout early: warn (never block) if that makes two workouts today
+      const i = t.dataset.i === undefined ? -1 : +t.dataset.i, today = (new Date().getDay() + 6) % 7, ws = weekStart(), eff = effDays(S.sched.days, ws, S.moves);
+      const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+      const twoToday = i >= 0 && i !== today && ((eff[today] && !dayDone(today)) || S.logs.some(l => l.date >= t0.getTime()));
+      if (twoToday && !(await ask('Heads up: that\'s two workouts today.', 'Start anyway'))) break;
+      startSession(find()); break;
+    }
+    case 'mvopen': {
+      const from = +t.dataset.i, ws = weekStart(), eff = effDays(S.sched.days, ws, S.moves), w = S.lib.find(x => x.id === eff[from]);
+      $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mvh"><div class="sheet">
+        <h2 id="mvh">Move ${esc(w ? w.name : 'workout')}</h2><p class="note" style="margin-top:0">From ${DAYS[from]}. Pick a day this week. Your coach's program stays the same.</p>
+        <div class="mvlist">${eff.map((id, j) => { if (j === from) return ''; const o = id && S.lib.find(x => x.id === id), dt = new Date(ws); dt.setDate(ws.getDate() + j);
+          return `<button class="mvday" data-act="mvto" data-from="${from}" data-to="${j}"><b>${DAYS[j]} ${dt.getMonth() + 1}/${dt.getDate()}</b><span>${o ? `Swap with ${esc(o.name)}${dayDone(j) ? ' (done)' : ''}` : 'Rest day → move here'}</span></button>`; }).join('')}</div>
+        <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn ghost" data-act="mvcancel">Cancel</button></div></div></div>`;
+      break;
+    }
+    case 'mvcancel': $('#overlay').innerHTML = ''; break;
+    case 'mvto': {
+      const from = +t.dataset.from, to = +t.dataset.to, ws = weekStart(), base = S.sched.days, before = effDays(base, ws, S.moves);
+      const after = [...before]; [after[from], after[to]] = [after[to], after[from]];
+      $('#overlay').innerHTML = '';
+      const warn = moveWarning(before, after, base, [from, to]);
+      if (warn && !(await ask(warn, 'Move anyway'))) break;
+      await saveMove(from, to); render(); toast(`Moved to ${DAYS[to]}.`); break;
+    }
+    case 'mvreset': {
+      if (!(await ask('Put this week back the way your coach planned it?', 'Undo moves'))) break;
+      const k = mvKey(weekStart()), m = S.moves[k], wk = wkKey();
+      if (m && Array.isArray(m.origin) && S.checks[wk]) { const c = (S.checks[wk].checked) || {}, back = {}; m.origin.forEach((o, kk) => { if (o != null && c[kk] !== undefined) back[o] = c[kk]; }); S.checks[wk] = { ...S.checks[wk], checked: back }; store.saveChecks(wk); }
+      S.moves = { ...S.moves }; delete S.moves[k];
+      if (S.db && S.uid) { try { await S.db.collection('users/' + S.uid + '/data').doc(k).delete(); } catch (e) {} }
+      render(); toast('Week is back to the plan.'); break;
+    }
+    case 'pwclose': $('#overlay').innerHTML = ''; break;
     case 'edit': { const w = find(); S.edit = JSON.parse(JSON.stringify(w)); S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
     case 'dup': { const w = find(); S.edit = { ...JSON.parse(JSON.stringify(w)), id: null, name: w.name + ' (copy)' }; S.pasteText = toText(w.items); S.mode = 'paste'; S.tab = 'coach'; S.csub = 'build'; render(); break; }
     case 'tick': {
       const ex = S.session.exercises[ei], st = ex.sets[si]; st.done = !st.done;
       if (st.done) { setCols(ex).forEach(([k, , ph]) => { if (!st[k] && st[ph]) st[k] = st[ph]; }); if (!st.rpe && st.phRPE) st.rpe = st.phRPE; }
+      // rest countdown after a logged set (not after the very last set of the workout)
+      if (st.done && S.session.exercises.some(e => e.sets.some(x => !x.done))) startRest(restFor(ei), `Rest · next: ${(() => { const s = S.session, b = s.blocks[ex.blk]; const nx = b && b.group ? s.exercises[b.eis[0]] : ex.sets.some(x => !x.done) ? ex : s.exercises.find((e, j) => j > ei && e.sets.some(x => !x.done)); return nx ? nx.name : 'next set'; })()}`);
       saveDraft(); render(); break;
     }
+    case 'rdefsave': {
+      const v = Math.max(10, Math.min(600, parseInt(($('#rdef') || {}).value) || 90)), doc = { kind: 'settings', name: '_settings', restDefault: v, updated: Date.now() };
+      try { await S.db.collection('exinfo').doc('_settings').set(doc); S.exinfo = { ...S.exinfo, _settings: doc }; render(); toast(`Default rest is now ${v} sec.`); } catch (e) { toast('Not saved. Check your connection.'); }
+      break;
+    }
+    case 'rminus': if (S.rest) { S.rest.end -= 15000; if (S.rest.end <= Date.now()) S.rest.end = Date.now() + 500; renderDock(); } break;
+    case 'rplus': if (S.rest) { S.rest.end += 15000; S.restBeep = 0; renderDock(); } break;
+    case 'rskip': S.rest = null; renderDock(); break;
+    case 'ivopen': ivOpen(+t.dataset.blk); break;
+    case 'ivgo': ivStart(); break;
+    case 'ivclose': S.iv = null; renderIv(); render(); break;
+    case 'ivend': ivFinish(false); break;
+    case 'ivpause': if (S.iv && !S.iv.paused) { S.iv.left = S.iv.end - Date.now(); S.iv.paused = true; renderIv(); } break;
+    case 'ivresume': if (S.iv && S.iv.paused) { S.iv.end = Date.now() + S.iv.left; S.iv.paused = false; S.iv.beepAt = 0; renderIv(); } break;
     case 'addset': { const ex = S.session.exercises[ei]; const l = ex.sets[ex.sets.length - 1]; const ns = { rpe: '', done: false, phRPE: l.phRPE }; setCols(ex).forEach(([k, , ph]) => { ns[k] = ''; ns[ph] = l[k] || l[ph] || ''; }); ex.sets.push(ns); saveDraft(); render(); break; }
     case 'rmset': S.session.exercises[ei].sets.pop(); saveDraft(); render(); break;
-    case 'discard': if (await ask('Discard this session? Nothing will be saved.', 'Discard session')) { S.session = null; saveDraft(); S.tab = 'week'; render(); } break;
+    case 'discard': if (await ask('Discard this session? Nothing will be saved.', 'Discard session')) { S.session = null; S.rest = null; S.iv = null; renderIv(); saveDraft(); S.tab = 'week'; render(); } break;
     case 'finish': openFinish(); break;
     case 'mnedit': { const ex = S.session.exercises[ei]; ex.mnEdit = true; ex.mnDraft = undefined; render(); const ta = document.querySelector(`[data-mn="${ei}"]`); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } break; }
     case 'mncancel': { const ex = S.session.exercises[ei]; ex.mnEdit = false; ex.mnDraft = undefined; saveDraft(); render(); break; }
@@ -2110,10 +2462,10 @@ document.addEventListener('click', async ev => {
     }
     case 'delwo': if (await ask(`Delete “${S.edit.name}”? Logged sessions stay in History.`, 'Delete workout')) { await store.deleteWorkout(S.edit.id); S.edit = null; S.pasteText = ''; S.tab = 'coach'; S.csub = 'library'; render(); toast('Workout deleted.'); } break;
     case 'daytick': {
-      const k = wkKey(); const cur = dayDone(i);
+      const k = wkKey(); const cur = dayDone(i), was = myWeekPerfect();
       const doc = S.checks[k] || { kind: 'week', id: k, checked: {} };
       S.checks[k] = { ...doc, checked: { ...doc.checked, [i]: !cur } };
-      render(); store.saveChecks(k); break;
+      render(); store.saveChecks(k); celebrateIfPerfect(was); break;
     }
     case 'csub': S.csub = t.dataset.m; S.openAth = null; render(); break;
     case 'seed': {
@@ -2230,6 +2582,8 @@ document.addEventListener('input', ev => {
   if (t.id === 'search') { S.filter = t.value; const pos = t.selectionStart; render(); const s = $('#search'); s.focus(); s.setSelectionRange(pos, pos); return; }
   if (t.dataset.mn !== undefined && S.session) { S.session.exercises[+t.dataset.mn].mnDraft = t.value; saveDraft(); return; }
   if (t.dataset.ei !== undefined && t.dataset.k) { S.session.exercises[+t.dataset.ei].sets[+t.dataset.si][t.dataset.k] = t.value; saveDraft(); return; }
+  if (t.dataset.ivc && S.iv) { const v = Math.max(t.dataset.ivc === 'rest' ? 0 : 1, Math.min(t.dataset.ivc === 'rounds' ? 50 : 600, parseInt(t.value) || 0)); S.iv.cfg[t.dataset.ivc] = v; const b = ivBlock(), el = $('#ivsum'); if (el) el.textContent = `${S.iv.cfg.rounds} rounds × ${b.eis.length} moves = ${S.iv.cfg.rounds * b.eis.length} intervals`; return; }
+  if (t.dataset.ivr) { const [ei, r] = t.dataset.ivr.split(':').map(Number); ivSet(ei, r).reps = t.value; saveDraft(); return; }
   if (t.dataset.bd) { S.bdraft[t.dataset.bd] = t.value; return; }
   if (t.dataset.pe) { S.pedit[t.dataset.pe] = t.value; return; }
   if (t.dataset.ph !== undefined) { S.pedit.phases[+t.dataset.ph][t.dataset.pf] = t.value; return; }
@@ -2250,6 +2604,7 @@ document.addEventListener('input', ev => {
 document.addEventListener('submit', ev => { if (ev.target.id === 'fsform') { ev.preventDefault(); foodSearch($('#fsq').value); } });
 document.addEventListener('change', ev => {
   const t = ev.target;
+  if (t.dataset.pref) { setPref(t.dataset.pref, t.checked); if (t.checked && t.dataset.pref === 'sound') { audioUnlock(); beep(880, 150); } if (t.checked && t.dataset.pref === 'vib') buzz(120); syncWake(); return; }
   if (t.dataset.pd !== undefined) { S.pedit.days[+t.dataset.pd] = t.value || null; render(); return; }
   if (t.dataset.phd !== undefined) { const ph = S.pedit.phases[+t.dataset.phd]; ph.days = PAD7(ph.days); ph.days[+t.dataset.pdi] = t.value || null; render(); return; }
   if (t.dataset.pxk !== undefined) { setPx(t); return; }
@@ -2334,9 +2689,9 @@ function wireAuth() {
   $('#signout').onclick = async () => { if (S.session && !(await ask('You have a workout in progress. Sign out anyway?', 'Sign out'))) return; S.session = null; saveDraft(); AUTH.signOut(); };
 }
 function splitData(all) {
-  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}, mynotes = {}; let prof = {}, mread = {}, macros = {}; const foods = {}, myfoods = [];
-  all.forEach(x => { if (x.kind === 'mynote') mynotes[exKey(x.name)] = x; else if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'msgread') mread = x; else if (x.kind === 'food') foods[x.date] = x; else if (x.kind === 'myfood') myfoods.push(x); else if (x.kind === 'macros') macros = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
-  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes, mynotes, mread, foods, myfoods, macros };
+  const checks = {}, body = [], logs = [], maxes = {}, cnotes = {}, mynotes = {}; const moves = {}; let prof = {}, mread = {}, macros = {}; const foods = {}, myfoods = [];
+  all.forEach(x => { if (x.kind === 'mynote') mynotes[exKey(x.name)] = x; else if (x.kind === 'moves') moves[x.id] = x; else if (x.kind === 'week') checks[x.id] = x; else if (x.kind === 'body') body.push(x); else if (x.kind === 'profile') prof = x; else if (x.kind === 'cnote') cnotes[x.workoutId] = x; else if (x.kind === 'msgread') mread = x; else if (x.kind === 'food') foods[x.date] = x; else if (x.kind === 'myfood') myfoods.push(x); else if (x.kind === 'macros') macros = x; else if (x.kind === 'max') maxes[exKey(x.name)] = x; else if (!x.kind) logs.push(x); });
+  return { logs, checks, body: body.sort((a, b) => a.date - b.date), prof, maxes, cnotes, mynotes, mread, foods, myfoods, macros, moves };
 }
 /* ---------- access control ----------
    Athletes can only read their assigned program and the workouts in it (see firestore.rules).
@@ -2429,7 +2784,7 @@ function startData(u) {
   else { on(FS.collection('msgs').where('uid', '==', u.uid), onMsgs('mine')); on(FS.collection('msgs').where('uid', '==', 'all'), onMsgs('all')); }
   on(FS.collection('users/' + u.uid + '/data'), snap => {
     const sd = splitData(snap.docs.map(d => d.data()));
-    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes; S.mynotes = sd.mynotes; S.mread = sd.mread; S.foods = sd.foods; S.myfoods = sd.myfoods; S.macros = sd.macros;
+    S.logs = sd.logs; S.checks = sd.checks; S.body = sd.body; S.prof = sd.prof; S.maxes = sd.maxes; S.cnotes = sd.cnotes; S.mynotes = sd.mynotes; S.mread = sd.mread; S.moves = sd.moves; S.foods = sd.foods; S.myfoods = sd.myfoods; S.macros = sd.macros;
     msgLoaded.data = true; render(); maybeMsgPopup();
   });
 }
