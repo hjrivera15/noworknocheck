@@ -1,5 +1,5 @@
 // No Work No Check — offline support. Bump VERSION when you upload a new build.
-const VERSION = 'nwnc-v15';
+const VERSION = 'nwnc-v16';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './firebase-config.js',
   './logo.webp', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
@@ -9,6 +9,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Exercise videos stream straight from the network (iPhones fetch them in pieces); never store them on the phone.
+  if (req.headers.has('range') || /\/videos\//.test(url.pathname) || /\.(mp4|mov|m4v|webm)$/i.test(url.pathname)) return;
   if (url.origin === location.origin) {
     // App files: always try the network first so updates show up right away.
     e.respondWith(fetch(req, { cache: 'no-cache' }).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy)); return r; })

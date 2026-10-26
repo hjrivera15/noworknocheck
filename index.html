@@ -95,6 +95,15 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .ex-h h3{display:flex;align-items:center;gap:2px}
 .infotext{white-space:pre-wrap;line-height:1.5;margin:10px 0 4px;font-size:1rem}
 .infotext a{color:var(--red)}
+.ibtn.vid{position:relative}
+.ibtn.vid::after{content:"\25B6";position:absolute;right:-6px;bottom:-5px;width:14px;height:14px;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--bg);font:normal 700 .5rem var(--body)}
+.vframe{position:relative;width:100%;aspect-ratio:16/9;margin:10px 0;border-radius:8px;overflow:hidden;background:#000}
+.vframe.tall{aspect-ratio:9/16;width:min(100%,calc(62vh * 9 / 16));margin:10px auto}
+.vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vplay{display:block;width:100%;max-height:62vh;margin:10px 0;border-radius:8px;background:#000}
+.vrest{font:800 1.1rem var(--display);color:var(--muted);margin:2px 0 4px}
+.vrest b{color:var(--ink);font-size:1.4rem;margin-left:4px;font-variant-numeric:tabular-nums}
+.vlink{font-weight:600;color:var(--muted)}
 .sheet textarea{width:100%;min-height:160px;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--field);font:inherit;margin-top:6px}
 .bodyform{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:end}
 .bodyform label{font-size:.8rem;color:var(--muted);font-weight:600}
@@ -521,7 +530,7 @@ const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday:'short'
 const e1rm = (w, r) => (w > 0 && r > 0) ? Math.round(r === 1 ? w : w * (1 + r / 30)) : 0;
 
 /* App version: bump this AND the number in sw.js VERSION (nwnc-vN) on every upload */
-const APP_VERSION = 15;
+const APP_VERSION = 16;
 document.querySelectorAll('.appver').forEach(p => { p.textContent = 'Version ' + APP_VERSION; });
 const S = {
   openWeek: null, cnotes: {}, maxes: {}, exinfo: {}, body: [], prof: {}, bdraft: {}, athData: {}, openAth: null, openLift: null, programs: [], assign: {}, roster: [], ppl: {}, adraft: {}, csub: 'athletes', msgs: [], mread: {}, mthread: null, mdraft: '', msgPopped: false, foods: {}, myfoods: [], teamfoods: [], macros: {}, moves: {}, iv: null, fdate: null, fs: null, email: '', pedit: null, previewProg: '', myProg: null, user: null, lib: [], logs: [], tab: 'week', sched: { days: [null,null,null,null,null,null,null] }, checks: {}, editWeek: false, session: null, edit: null, mode: 'paste', pasteText: '',
@@ -1832,31 +1841,62 @@ function openCNote(uid, wid) {
 
 /* ---------- exercise info ---------- */
 const exKey = n => String(n || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 120) || 'x';
-function infoBtn(name) {
-  const has = S.exinfo[exKey(name)] && S.exinfo[exKey(name)].text;
-  if (!has && !S.canLib) return '';
-  return `<button class="ibtn ${has ? 'has' : ''}" data-act="info" data-n="${esc(name)}" aria-label="${has ? 'Info' : 'Add info'} for ${esc(name)}" title="${has ? 'Coach notes' : 'Add coach notes'}">i</button>`;
+/* ---------- exercise demo videos ----------
+   exinfo/{exKey}.video: a link (YouTube / Shorts, Instagram Reel, TikTok, Vimeo, or any .mp4 link) or the file name of a clip
+   the coach uploaded to the repo's videos/ folder. Videos play inside the ⓘ pop-up; link players are sandboxed (no popups,
+   no top-level navigation) so tapping them can't send the athlete to YouTube / Instagram / another page. */
+function videoEmbed(src) {
+  const s = String(src || '').trim(); let m;
+  if (!s) return null;
+  if (/^[\w\- .()]+\.(mp4|mov|m4v|webm)$/i.test(s)) return { kind: 'file', url: 'videos/' + encodeURIComponent(s) };
+  if (/^https?:\/\/\S+\.(mp4|mov|m4v|webm)(\?\S*)?$/i.test(s)) return { kind: 'file', url: s };
+  if ((m = s.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:\S*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i))) return { kind: 'frame', url: `https://www.youtube-nocookie.com/embed/${m[1]}?playsinline=1&rel=0&modestbranding=1`, tall: /shorts\//i.test(s) };
+  if ((m = s.match(/instagram\.com\/(?:[\w.]+\/)?(reels?|p|tv)\/([\w-]+)/i))) return { kind: 'frame', url: `https://www.instagram.com/${/^reel/i.test(m[1]) ? 'reel' : m[1]}/${m[2]}/embed/`, tall: true };
+  if ((m = s.match(/tiktok\.com\/\S*\/video\/(\d+)/i))) return { kind: 'frame', url: `https://www.tiktok.com/embed/v2/${m[1]}`, tall: true };
+  if ((m = s.match(/vimeo\.com\/(?:video\/)?(\d+)/i))) return { kind: 'frame', url: `https://player.vimeo.com/video/${m[1]}?playsinline=1` };
+  return null;
 }
-const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+const videoHtml = v => v.kind === 'file'
+  ? `<video class="vplay" src="${esc(v.url)}" controls playsinline preload="metadata" controlslist="nodownload noremoteplayback" disablepictureinpicture></video>`
+  : `<div class="vframe${v.tall ? ' tall' : ''}"><iframe src="${esc(v.url)}" title="Exercise demo" allow="autoplay; encrypted-media; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+const isVideoLink = u => !!videoEmbed(u);
+/* the demo for an exercise: the video box, or else the first video link the coach pasted into the notes */
+const demoOf = doc => videoEmbed(doc.video) || videoEmbed(((doc.text || '').match(/https?:\/\/\S+/g) || []).find(isVideoLink));
+function infoBtn(name) {
+  const doc = S.exinfo[exKey(name)] || {}, vid = !!demoOf(doc), has = !!doc.text || vid;
+  if (!has && !S.canLib) return '';
+  return `<button class="ibtn ${has ? 'has' : ''}${vid ? ' vid' : ''}" data-act="info" data-n="${esc(name)}" aria-label="${vid ? 'Video and notes' : has ? 'Info' : 'Add info'} for ${esc(name)}" title="${vid ? 'Demo video + coach notes' : has ? 'Coach notes' : 'Add coach notes'}">i</button>`;
+}
+/* links in notes: video links play in the pop-up instead of opening another page */
+const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, u => isVideoLink(u.replace(/&amp;/g, '&')) ? '<span class="vlink">▶ video above</span>' : `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
 function openInfo(name) {
-  const k = exKey(name), doc = S.exinfo[k] || {}, text = doc.text || '';
-  $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ih"><div class="sheet">
-    <h2 id="ih">${esc(name)}</h2>
+  const k = exKey(name), doc = S.exinfo[k] || {}, text = doc.text || '', vid = demoOf(doc);
+  const restLine = () => S.rest && !S.rest.go ? `<div class="vrest">Rest <b id="infoRestT">${fmt(Math.max(0, Math.ceil((S.rest.end - Date.now()) / 1000)))}</b></div>` : '';
+  $('#overlay').innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ih"><div class="sheet vsheet">
+    <h2 id="ih">${esc(name)}</h2>${restLine()}
     ${S.canLib ? `<p class="note" style="margin:0">Coach notes. Athletes see this when they tap the <b>i</b> next to this exercise, in every workout that uses it.</p>
-      <textarea id="infotxt" placeholder="Setup, key cues, common mistakes, scaling options…">${esc(text)}</textarea>` :
-      `<div class="infotext">${text ? linkify(text) : '<span style="color:var(--muted)">No notes for this one yet.</span>'}</div>`}
-    <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" id="iclose">Close</button>${S.canLib ? '<button class="btn go" id="isave">Save notes</button>' : ''}</div>
+      <label class="f" for="infovid">Demo video</label><input class="inp" id="infovid" value="${esc(doc.video || '')}" placeholder="YouTube, Instagram Reel or TikTok link, or goblet-squat.mp4">
+      <p class="note" style="margin:4px 0 0">Paste a link, or for your own clip: upload it to the <b>videos</b> folder on GitHub and type its file name.</p>
+      <div id="vprev">${vid ? videoHtml(vid) : ''}</div>
+      <label class="f" for="infotxt">Notes</label><textarea id="infotxt" placeholder="Setup, key cues, common mistakes, scaling options…">${esc(text)}</textarea>` :
+      `${vid ? videoHtml(vid) : ''}<div class="infotext">${text ? linkify(text) : vid ? '' : '<span style="color:var(--muted)">No notes for this one yet.</span>'}</div>`}
+    <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn ghost" id="iclose">Close</button>${S.canLib ? '<button class="btn go" id="isave">Save</button>' : ''}</div>
   </div></div>`;
-  $('#iclose').onclick = () => $('#overlay').innerHTML = '';
-  if (S.canLib) $('#isave').onclick = async () => {
-    const t = $('#infotxt').value.trim();
-    try {
-      if (t) await S.db.collection('exinfo').doc(k).set({ id: k, name, text: t, updated: Date.now() });
-      else await S.db.collection('exinfo').doc(k).delete();
-      S.exinfo[k] = t ? { id: k, name, text: t } : undefined;
-      $('#overlay').innerHTML = ''; render(); toast(t ? 'Notes saved.' : 'Notes removed.');
-    } catch (e) { toast(e && e.code === 'permission-denied' ? 'Not saved: update your Firebase rules (see the new exinfo line).' : 'Notes not saved. Try again.'); }
-  };
+  $('#iclose').onclick = () => $('#overlay').innerHTML = ''; // closing removes the player, which stops the video
+  if (S.canLib) {
+    $('#infovid').onchange = () => { const v = videoEmbed($('#infovid').value); $('#vprev').innerHTML = v ? videoHtml(v) : ($('#infovid').value.trim() ? '<p class="note bad">That link isn\'t one the app can play. Use a YouTube, Instagram Reel, TikTok or Vimeo link, an .mp4 link, or a clip file name.</p>' : ''); };
+    $('#isave').onclick = async () => {
+      const t = $('#infotxt').value.trim(), v = $('#infovid').value.trim();
+      if (v && !videoEmbed(v)) { toast('That video link won\'t play. Check it and try again.'); return; }
+      try {
+        const d = { id: k, name, text: t, ...(v ? { video: v } : {}), updated: Date.now() };
+        if (t || v) await S.db.collection('exinfo').doc(k).set(d);
+        else await S.db.collection('exinfo').doc(k).delete();
+        S.exinfo[k] = t || v ? d : undefined;
+        $('#overlay').innerHTML = ''; render(); toast(t || v ? 'Saved.' : 'Notes removed.');
+      } catch (e) { toast(e && e.code === 'permission-denied' ? 'Not saved: update your Firebase rules (see the new exinfo line).' : 'Not saved. Try again.'); }
+    };
+  }
 }
 /* ---------- start-of-workout message ---------- */
 const VERSES = [
@@ -1957,7 +1997,7 @@ function viewInfoList() {
   if (!names.length) return restSettingsHtml() + motivSettingsHtml() + `<div class="empty"><strong>No exercises yet</strong>Add workouts first. Every exercise in them shows up here.</div>`;
   const n = names.filter(x => S.exinfo[exKey(x)] && S.exinfo[exKey(x)].text).length;
   return restSettingsHtml() + motivSettingsHtml() + `<h2 class="h">Exercise notes</h2><p class="note">Write notes once per exercise. They show up everywhere that exercise is used. ${n} of ${names.length} have notes.</p>` +
-    names.map(x => { const has = S.exinfo[exKey(x)] && S.exinfo[exKey(x)].text; return `<button class="exi" data-act="info" data-n="${esc(x)}"><span><b>${esc(x)}</b><br><span class="s ${has ? 'y' : ''}">${has ? '✓ Has notes' : 'No notes yet'}</span></span><span class="ibtn ${has ? 'has' : ''}" aria-hidden="true">i</span></button>`; }).join('');
+    names.map(x => { const d = S.exinfo[exKey(x)] || {}, vid = !!demoOf(d), has = !!d.text || vid; return `<button class="exi" data-act="info" data-n="${esc(x)}"><span><b>${esc(x)}</b><br><span class="s ${has ? 'y' : ''}">${[d.text ? '✓ Has notes' : '', vid ? '▶ Video' : ''].filter(Boolean).join(' · ') || 'No notes yet'}</span></span><span class="ibtn ${has ? 'has' : ''}${vid ? ' vid' : ''}" aria-hidden="true">i</span></button>`; }).join('');
 }
 
 /* ---------- body / profile ---------- */
@@ -2117,6 +2157,7 @@ setInterval(() => {
     const left = Math.ceil((r.end - Date.now()) / 1000), t = $('#restT');
     if (t) { t.textContent = fmt(Math.max(0, left)); t.classList.toggle('hot', left <= 3); }
     const t2 = $('#ivRestT'); if (t2) t2.textContent = fmt(Math.max(0, left));
+    const t3 = $('#infoRestT'); if (t3) t3.textContent = fmt(Math.max(0, left));
     if (left <= 3 && left >= 1 && S.restBeep !== left) { S.restBeep = left; beep(660, 120); }
     if (left <= 0) { beep(1046, 400); buzz([200, 80, 200]); r.go = true; renderDock(); setTimeout(() => { if (S.rest === r) { S.rest = null; renderDock(); } }, 1800); }
   }
