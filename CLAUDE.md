@@ -19,7 +19,7 @@ Workout tracking app for a strength coach (Heriberto) and his athletes. It works
 - `programs/{id}`: `{name, weeks, days[7] (workoutId|null, Mon-first), phases:[{from,to,name,rpe,preset,main:{sets,reps,pct},note}], main:[exercise names], presetWorkouts:[ids], skipSections:[labels], warmup:[exercise names]}`. Coach writes.
 - `assign/{uid}`: `{uid, programId, start (YYYY-MM-DD Monday), label, wids:[workout ids in that program]}`. Coach writes. Athletes read only their own.
 - `roster/{uid}`: `{id, name, email, lastSeen, appVersion}`. Each user writes their own.
-- `exinfo/{exKey}`: coach notes per exercise `{name, text}`.
+- `exinfo/{exKey}`: coach notes per exercise `{name, text, video?}`. `video` = a YouTube / Shorts, Instagram Reel, TikTok, Vimeo or .mp4 link, or a clip file name in the repo's `videos/` folder (`videoEmbed`). Plays inside the ⓘ pop-up everywhere (sandboxed iframe: no popups or navigation; own clips use a plain `<video playsinline>`). Video links pasted in the notes text also play inline. `sw.js` never caches videos or range requests.
 - `teamfoods/{id}`: foods shared with the whole team `{id, name, brand?, serving, per (one serving), by (uid), byName, created}`. Any signed-in user reads/creates (by = self); only the creator or coach deletes. Shown in Food → Saved and first in Search.
 - `msgs/{id}`: messages `{id, uid (athlete thread, or 'all' = announcement), from, coach (bool), name, text, date, workout?, logId?}`. Coach reads all (latest 500); athletes read their own thread + `all`. Read markers: `users/{uid}/data/msgread` (`kind: 'msgread'`; athletes `{last}`, coach `{at:{uid:time}}`).
 - `users/{uid}/data/{doc}`: per-athlete data, split by `kind` (also `moves`, see below; week check-off docs may carry `perfect: true`):
